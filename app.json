@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "FAATTSOO",
+    "slug": "faattsoo-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "scheme": "faattsoo",
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": false
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#F7F1EA"
+      }
+    },
+    "plugins": ["expo-secure-store"]
+  }
+}

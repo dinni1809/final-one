@@ -1,0 +1,18 @@
+export const routes = {
+  login: 'Login',
+  forgotPassword: 'ForgotPassword',
+  signup: 'SignUp',
+  mainDrawer: 'MainDrawer',
+  tabs: 'Tabs',
+  home: 'Home',
+  discover: 'Discover',
+  trending: 'Trending',
+  profile: 'Profile',
+  restaurantDetails: 'RestaurantDetails',
+  offers: 'Offers',
+  offerDetails: 'OfferDetails',
+  bookmarks: 'Bookmarks',
+  notifications: 'Notifications',
+  search: 'Search',
+  restaurantList: 'RestaurantList',
+} as const;

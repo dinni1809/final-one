@@ -6,6 +6,7 @@ export const queryKeys = {
   featured: ["restaurants", "featured"],
   offers: ["offers"],
   menu: (restaurantId: string) => ["menu", restaurantId],
+  reviews: (restaurantId: string) => ["reviews", restaurantId],
   search: (query: string) => ["search", query],
   filters: ["filters"],
   restaurantFilters: ["restaurant-filters"],

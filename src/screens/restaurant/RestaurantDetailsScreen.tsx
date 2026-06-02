@@ -21,6 +21,8 @@ import { CategoryTabs } from "@/components/restaurant/CategoryTabs";
 import { FavoriteButton } from "@/components/restaurant/FavoriteButton";
 import { MenuCard } from "@/components/restaurant/MenuCard";
 import { RatingSummaryCard } from "@/components/restaurant/RatingSummaryCard";
+import { ReviewCard } from "@/components/restaurant/ReviewCard";
+import { ReviewForm } from "@/components/restaurant/ReviewForm";
 import { VideoCard } from "@/components/restaurant/VideoCard";
 import { IconButton } from "@/components/common/IconButton";
 import { LogoBadge } from "@/components/common/LogoBadge";
@@ -29,8 +31,9 @@ import { SearchBar } from "@/components/forms/SearchBar";
 import { useMenu } from "@/hooks/useMenu";
 import { useRatingSummary } from "@/hooks/useRating";
 import { useRestaurantDetails } from "@/hooks/useRestaurants";
+import { useReviews, useSubmitReview } from "@/hooks/useReviews";
 import { colors, radius, shadows, typography } from "@/theme";
-import type { MenuCategory, MenuItem } from "@/types/restaurant";
+import type { MenuCategory, MenuItem, Review } from "@/types/restaurant";
 
 type DetailsRoute = RouteProp<
   { RestaurantDetails: { restaurantId: string } },
@@ -42,9 +45,46 @@ export function RestaurantDetailsScreen() {
   const route = useRoute<DetailsRoute>();
   const restaurantId = route.params?.restaurantId ?? "olive-bistro";
   const [category, setCategory] = useState<MenuCategory>("All");
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewTitle, setReviewTitle] = useState("");
+  const [reviewBody, setReviewBody] = useState("");
   const { data: restaurant } = useRestaurantDetails(restaurantId);
   const { data: menu = [] } = useMenu(restaurantId, category);
   const { data: rating } = useRatingSummary(restaurantId);
+  const { data: reviews = [], isLoading: reviewsLoading } = useReviews(
+    restaurantId,
+  ) as {
+    data?: Review[];
+    isLoading: boolean;
+  };
+  const submitReview = useSubmitReview(restaurantId);
+  const isSubmittingReview = submitReview.status === "pending";
+
+  const handleSubmitReview = async () => {
+    if (!reviewTitle.trim() || !reviewBody.trim()) {
+      Alert.alert(
+        "Review missing",
+        "Please add a title and review content before submitting.",
+      );
+      return;
+    }
+
+    try {
+      await submitReview.mutateAsync({
+        rating: reviewRating,
+        title: reviewTitle.trim(),
+        body: reviewBody.trim(),
+      });
+      setReviewRating(5);
+      setReviewTitle("");
+      setReviewBody("");
+    } catch (error) {
+      Alert.alert(
+        "Failed to submit review",
+        (error as Error).message || "Please try again later.",
+      );
+    }
+  };
 
   if (!restaurant || !rating) {
     return <Screen />;
@@ -160,6 +200,38 @@ export function RestaurantDetailsScreen() {
               <MenuCard key={item.id} item={item} />
             ))}
           </View>
+        </View>
+
+        <View style={styles.reviewSection}>
+          <ReviewForm
+            rating={reviewRating}
+            title={reviewTitle}
+            body={reviewBody}
+            loading={isSubmittingReview}
+            onRatingChange={setReviewRating}
+            onTitleChange={setReviewTitle}
+            onBodyChange={setReviewBody}
+            onSubmit={handleSubmitReview}
+          />
+          <View style={styles.reviewHeader}>
+            <Text style={styles.sectionTitle}>Guest Reviews</Text>
+            <Text style={styles.sectionMeta}>
+              {reviewsLoading
+                ? "Loading…"
+                : `${reviews.length} review${reviews.length === 1 ? "" : "s"}`}
+            </Text>
+          </View>
+          {reviewsLoading ? (
+            <Text style={styles.emptyText}>Loading reviews…</Text>
+          ) : reviews.length === 0 ? (
+            <Text style={styles.emptyText}>
+              No reviews yet. Be the first to share your experience.
+            </Text>
+          ) : (
+            reviews.map((review) => (
+              <ReviewCard key={review.id} review={review} />
+            ))
+          )}
         </View>
 
         <View style={styles.notice}>
@@ -326,6 +398,30 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     justifyContent: "space-between",
     marginTop: 14,
+  },
+  reviewSection: {
+    marginTop: 18,
+  },
+  reviewHeader: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 10,
+    marginTop: 18,
+    marginBottom: 12,
+  },
+  sectionTitle: {
+    ...typography.h2,
+    color: colors.primaryDark,
+  },
+  sectionMeta: {
+    color: colors.textSecondary,
+    fontSize: 13,
+  },
+  emptyText: {
+    color: colors.textSecondary,
+    fontSize: 14,
+    lineHeight: 20,
   },
   notice: {
     alignItems: "center",

@@ -1,9 +1,0 @@
-
-> faattsoo-mobile@1.0.0 web
-> expo start --web --offline
-
-Starting project at C:\Users\diwak\Downloads\RESTAURANT FINDER\final one
-Starting Metro Bundler
-Waiting on http://localhost:8081
-Logs for your project will appear below.
-Web Bundled 4230ms node_modules\expo\AppEntry.js (1087 modules)

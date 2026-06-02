@@ -1,8 +1,5 @@
-node_modules/
-.expo/
-dist/
-build/
-tmp/
-*.log
-.env
+node_modules
 .env.local
+uploads/*
+!uploads/restaurants/
+!uploads/menu/

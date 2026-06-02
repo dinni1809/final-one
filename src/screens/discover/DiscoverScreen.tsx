@@ -12,8 +12,8 @@ import { Screen } from "@/components/common/Screen";
 import { SectionHeader } from "@/components/common/SectionHeader";
 import { FilterDropdown } from "@/components/forms/FilterDropdown";
 import { useRestaurants } from "@/hooks/useRestaurants";
+import { useRestaurantFilters } from "@/hooks/useRestaurantFilters";
 import { useFilterStore } from "@/store/filterStore";
-import { restaurants as mockRestaurants } from "@/data/mock/restaurants";
 import { colors, radius, shadows, typography } from "@/theme";
 import type { DiscoverStackParamList } from "@/types/navigation";
 import type { Restaurant } from "@/types/restaurant";
@@ -27,20 +27,29 @@ export function DiscoverScreen() {
   const filters = useFilterStore((state) => state.filters);
   const setFilter = useFilterStore((state) => state.setFilter);
   const { data: restaurants = [] } = useRestaurants(filters);
-  const { data: allRestaurants = [] } = useRestaurants();
-
-  const filterOptions = useMemo(
-    () => {
-      const source: Restaurant[] = allRestaurants.length > 0 ? allRestaurants : mockRestaurants;
-      return {
-      area: Array.from(new Set(source.map((item) => item.area))).sort(),
-      price: ["Budget", "Mid", "Premium", "Luxury"],
-      menuItem: ["Biryani", "Pizza", "Burger", "Pasta", "Desserts", "Coffee"],
-      cuisine: Array.from(new Set(source.flatMap((item) => item.cuisines))).sort(),
-      style: Array.from(new Set(source.map((item) => item.style))).sort(),
-      };
+  const {
+    data: filterOptions = {
+      areas: [],
+      cuisines: [],
+      styles: [],
+      prices: ["Budget", "Mid", "Premium", "Luxury"],
     },
-    [allRestaurants],
+  } = useRestaurantFilters();
+
+  const menuOptions = useMemo(
+    () => ["Biryani", "Pizza", "Burger", "Pasta", "Desserts", "Coffee"],
+    [],
+  );
+
+  const dropdownOptions = useMemo(
+    () => ({
+      area: filterOptions.areas,
+      price: filterOptions.prices,
+      menuItem: menuOptions,
+      cuisine: filterOptions.cuisines,
+      style: filterOptions.styles,
+    }),
+    [filterOptions, menuOptions],
   );
 
   return (
@@ -82,7 +91,7 @@ export function DiscoverScreen() {
             label="Area"
             value={filters.area}
             placeholder="Select area"
-            options={filterOptions.area}
+            options={dropdownOptions.area}
             open={openFilter === "area"}
             onOpen={() => setOpenFilter("area")}
             onClose={() => setOpenFilter(null)}
@@ -95,7 +104,7 @@ export function DiscoverScreen() {
             label="Price"
             value={filters.price}
             placeholder="Select price"
-            options={filterOptions.price}
+            options={dropdownOptions.price}
             open={openFilter === "price"}
             onOpen={() => setOpenFilter("price")}
             onClose={() => setOpenFilter(null)}
@@ -108,7 +117,7 @@ export function DiscoverScreen() {
             label="Menu item"
             value={filters.menuItem}
             placeholder="Select item"
-            options={filterOptions.menuItem}
+            options={dropdownOptions.menuItem}
             open={openFilter === "menuItem"}
             onOpen={() => setOpenFilter("menuItem")}
             onClose={() => setOpenFilter(null)}
@@ -121,7 +130,7 @@ export function DiscoverScreen() {
             label="Cuisine"
             value={filters.cuisine}
             placeholder="Select cuisine"
-            options={filterOptions.cuisine}
+            options={dropdownOptions.cuisine}
             open={openFilter === "cuisine"}
             onOpen={() => setOpenFilter("cuisine")}
             onClose={() => setOpenFilter(null)}
@@ -134,7 +143,7 @@ export function DiscoverScreen() {
             label="Type"
             value={filters.style}
             placeholder="Select type"
-            options={filterOptions.style}
+            options={dropdownOptions.style}
             open={openFilter === "style"}
             onOpen={() => setOpenFilter("style")}
             onClose={() => setOpenFilter(null)}
@@ -154,7 +163,9 @@ export function DiscoverScreen() {
             Handpicked restaurants for memorable dining experiences.
           </Text>
           {restaurants.length === 0 ? (
-            <Text style={styles.empty}>No restaurants found. Try changing a dropdown.</Text>
+            <Text style={styles.empty}>
+              No restaurants found. Try changing a dropdown.
+            </Text>
           ) : (
             <FlatList
               data={restaurants.slice(0, 8)}

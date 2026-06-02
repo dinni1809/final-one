@@ -1,10 +1,36 @@
+const mongoose = require("mongoose");
 const Restaurant = require("../models/Restaurant");
 const MenuItem = require("../models/MenuItem");
 const { getPagination } = require("../utils/pagination");
 
 exports.create = (data) => Restaurant.create(data);
 exports.findById = (id) => Restaurant.findById(id);
-exports.update = (id, data) => Restaurant.findByIdAndUpdate(id, data, { new: true, runValidators: true });
+exports.findBySlug = (slug) => Restaurant.findOne({ slug });
+exports.findByIdOrSlug = async (id) => {
+  if (mongoose.Types.ObjectId.isValid(id)) {
+    const restaurant = await Restaurant.findById(id);
+    if (restaurant) return restaurant;
+  }
+  return Restaurant.findOne({ slug: id.toString().toLowerCase() });
+};
+exports.findBySlugs = (values) => {
+  const normalizedSlugs = values
+    .filter((value) => typeof value === "string")
+    .map((value) => value.toLowerCase());
+
+  const objectIds = values
+    .filter((value) => mongoose.Types.ObjectId.isValid(value.toString()))
+    .map((value) => mongoose.Types.ObjectId(value.toString()));
+
+  return Restaurant.find({
+    $or: [
+      { slug: { $in: normalizedSlugs } },
+      ...(objectIds.length > 0 ? [{ _id: { $in: objectIds } }] : []),
+    ],
+  });
+};
+exports.update = (id, data) =>
+  Restaurant.findByIdAndUpdate(id, data, { new: true, runValidators: true });
 exports.remove = (id) => Restaurant.findByIdAndDelete(id);
 exports.count = () => Restaurant.countDocuments();
 exports.distinctAreas = () => Restaurant.distinct("area");
@@ -23,7 +49,16 @@ exports.findAll = async (query) => {
 exports.searchByName = (q = "") =>
   Restaurant.find({ name: { $regex: q, $options: "i" } }).sort("-rating");
 
-exports.filter = async ({ area, cuisine, price, rating, style, menuItem, page, limit }) => {
+exports.filter = async ({
+  area,
+  cuisine,
+  price,
+  rating,
+  style,
+  menuItem,
+  page,
+  limit,
+}) => {
   const filter = {};
   if (area) filter.area = area;
   if (cuisine) filter.cuisine = cuisine;
@@ -40,7 +75,10 @@ exports.filter = async ({ area, cuisine, price, rating, style, menuItem, page, l
 
   const pagination = getPagination({ page, limit });
   const [items, total] = await Promise.all([
-    Restaurant.find(filter).sort("-rating").skip(pagination.skip).limit(pagination.limit),
+    Restaurant.find(filter)
+      .sort("-rating")
+      .skip(pagination.skip)
+      .limit(pagination.limit),
     Restaurant.countDocuments(filter),
   ]);
 
@@ -48,5 +86,6 @@ exports.filter = async ({ area, cuisine, price, rating, style, menuItem, page, l
 };
 
 exports.topRated = () => Restaurant.find().sort("-rating").limit(10);
-exports.featured = () => Restaurant.find({ isFeatured: true }).sort("-rating").limit(10);
+exports.featured = () =>
+  Restaurant.find({ isFeatured: true }).sort("-rating").limit(10);
 exports.recent = () => Restaurant.find().sort("-createdAt").limit(10);

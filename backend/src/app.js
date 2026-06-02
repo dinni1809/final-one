@@ -6,6 +6,8 @@ const passport = require("./config/passport");
 const authRoutes = require("./routes/authRoutes");
 const restaurantRoutes = require("./routes/restaurantRoutes");
 const menuRoutes = require("./routes/menuRoutes");
+const offerRoutes = require("./routes/offerRoutes");
+const favoriteRoutes = require("./routes/favoriteRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const errorMiddleware = require("./middleware/errorMiddleware");
 
@@ -19,10 +21,14 @@ app.use(morgan("dev"));
 app.use(passport.initialize());
 app.use("/uploads", express.static("uploads"));
 
-app.get("/health", (_req, res) => res.json({ success: true, message: "API is healthy" }));
+app.get("/health", (_req, res) =>
+  res.json({ success: true, message: "API is healthy" }),
+);
 app.use("/api/auth", authRoutes);
 app.use("/api/restaurants", restaurantRoutes);
 app.use("/api/menu", menuRoutes);
+app.use("/api/offers", offerRoutes);
+app.use("/api/favorites", favoriteRoutes);
 app.use("/api/admin", adminRoutes);
 app.use(errorMiddleware);
 

@@ -11,6 +11,13 @@ router.get("/prices", restaurantController.prices);
 router.get("/top-rated", restaurantController.topRated);
 router.get("/featured", restaurantController.featured);
 router.get("/recent", restaurantController.recent);
+router.get("/:id/ratings", restaurantController.ratings);
+router.get("/:id/reviews", restaurantController.reviews);
+router.post(
+  "/:id/reviews",
+  require("../middleware/authMiddleware").requireAuth,
+  restaurantController.addReview,
+);
 router.get("/:id", restaurantController.getById);
 
 module.exports = router;

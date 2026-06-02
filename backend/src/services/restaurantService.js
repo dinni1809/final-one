@@ -8,9 +8,9 @@ const { RESTAURANT_STYLES } = require("../constants/restaurantStyles");
 exports.getAll = (query) => restaurantRepository.findAll(query);
 
 exports.getById = async (id) => {
-  const restaurant = await restaurantRepository.findById(id);
+  const restaurant = await restaurantRepository.findByIdOrSlug(id);
   if (!restaurant) throw new ApiError(404, "Restaurant not found");
-  const menu = await menuRepository.findByRestaurant(id);
+  const menu = await menuRepository.findByRestaurant(restaurant._id);
   return { restaurant, menu };
 };
 

@@ -6,6 +6,14 @@ const { RESTAURANT_STYLES } = require("../constants/restaurantStyles");
 const restaurantSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true, index: true },
+    slug: {
+      type: String,
+      unique: true,
+      sparse: true,
+      trim: true,
+      lowercase: true,
+      index: true,
+    },
     area: { type: String, required: true, trim: true, index: true },
     cuisine: [{ type: String, enum: CUISINES, index: true }],
     priceCategory: { type: String, enum: PRICE_CATEGORIES, required: true },
@@ -15,8 +23,18 @@ const restaurantSchema = new mongoose.Schema(
     image: { type: String },
     isFeatured: { type: Boolean, default: false, index: true },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
+
+restaurantSchema.pre("save", function setSlug(next) {
+  if (!this.slug && this.name) {
+    this.slug = this.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+  }
+  next();
+});
 
 restaurantSchema.index({ name: "text", area: "text", cuisine: "text" });
 

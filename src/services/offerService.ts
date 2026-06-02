@@ -1,14 +1,17 @@
-import { offers } from '@/data/mock/restaurants';
+import type { Offer } from "@/types/restaurant";
 
-import { apiClient } from './api/client';
+import { apiClient } from "./api/client";
+
+type ApiEnvelope<T> = { success?: boolean; data: T };
+
+const unwrap = <T>(payload: T | ApiEnvelope<T>): T =>
+  payload && typeof payload === "object" && "data" in payload
+    ? (payload as ApiEnvelope<T>).data
+    : (payload as T);
 
 export const offerService = {
   async getTopOffers() {
-    try {
-      const { data } = await apiClient.get<typeof offers>('/offers');
-      return data;
-    } catch {
-      return offers;
-    }
+    const { data } = await apiClient.get<ApiEnvelope<Offer[]>>("/offers");
+    return unwrap(data);
   },
 };

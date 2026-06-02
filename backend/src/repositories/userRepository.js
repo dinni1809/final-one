@@ -24,3 +24,17 @@ exports.upsertGoogleUser = ({ name, email, googleId, avatar }) =>
     { name, email, googleId, avatar },
     { new: true, upsert: true, setDefaultsOnInsert: true },
   );
+
+exports.addFavoriteRestaurant = (userId, restaurantSlug) =>
+  User.findByIdAndUpdate(
+    userId,
+    { $addToSet: { favoriteRestaurants: restaurantSlug } },
+    { new: true, runValidators: true },
+  );
+
+exports.removeFavoriteRestaurant = (userId, restaurantSlug) =>
+  User.findByIdAndUpdate(
+    userId,
+    { $pull: { favoriteRestaurants: restaurantSlug } },
+    { new: true, runValidators: true },
+  );

@@ -1,14 +1,19 @@
-import { ratingSummary } from '@/data/mock/restaurants';
+import type { RatingSummary } from "@/types/restaurant";
 
-import { apiClient } from './api/client';
+import { apiClient } from "./api/client";
+
+type ApiEnvelope<T> = { success?: boolean; data: T };
+
+const unwrap = <T>(payload: T | ApiEnvelope<T>): T =>
+  payload && typeof payload === "object" && "data" in payload
+    ? (payload as ApiEnvelope<T>).data
+    : (payload as T);
 
 export const ratingService = {
   async getSummary(restaurantId: string) {
-    try {
-      const { data } = await apiClient.get<typeof ratingSummary>(`/restaurants/${restaurantId}/ratings`);
-      return data;
-    } catch {
-      return ratingSummary;
-    }
+    const { data } = await apiClient.get<ApiEnvelope<RatingSummary>>(
+      `/restaurants/${restaurantId}/ratings`,
+    );
+    return unwrap(data);
   },
 };

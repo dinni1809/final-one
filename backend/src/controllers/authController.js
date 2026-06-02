@@ -26,4 +26,14 @@ exports.googleLogin = async (req, res, next) => {
 };
 
 exports.me = (req, res) => response.ok(res, { user: req.user });
-exports.logout = (_req, res) => response.ok(res, { message: "Logged out successfully" });
+
+exports.updateProfile = async (req, res, next) => {
+  try {
+    response.ok(res, await authService.updateProfile(req.user._id, req.body));
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.logout = (_req, res) =>
+  response.ok(res, { message: "Logged out successfully" });

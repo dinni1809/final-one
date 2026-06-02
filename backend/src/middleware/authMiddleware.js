@@ -9,7 +9,13 @@ exports.requireAuth = async (req, _res, next) => {
     const token = header?.startsWith("Bearer ") ? header.slice(7) : null;
     if (!token) throw new ApiError(401, "Authentication required");
 
-    const payload = jwt.verify(token, env.jwtSecret);
+    let payload;
+    try {
+      payload = jwt.verify(token, env.jwtSecret);
+    } catch (_err) {
+      throw new ApiError(401, "Invalid authentication token");
+    }
+
     const user = await userRepository.findById(payload.id);
     if (!user) throw new ApiError(401, "Invalid authentication token");
 

@@ -7,9 +7,20 @@ exports.registerValidator = Joi.object({
 });
 
 exports.loginValidator = Joi.object({
-  email: Joi.string().email().required(),
+  identifier: Joi.string().min(2),
+  email: Joi.string().email(),
   password: Joi.string().required(),
-});
+})
+  .or("identifier", "email")
+  .messages({
+    "object.missing": "Identifier or email is required",
+  });
+
+exports.updateProfileValidator = Joi.object({
+  name: Joi.string().min(2).max(80),
+  email: Joi.string().email(),
+  avatar: Joi.string().uri().allow("", null),
+}).or("name", "email", "avatar");
 
 exports.googleValidator = Joi.object({
   name: Joi.string().required(),

@@ -1,25 +1,40 @@
-import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
-import { StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { StyleSheet, Text, TouchableOpacity } from "react-native";
 
-import { colors, radius, shadows } from '@/theme';
+import { colors, radius, shadows } from "@/theme";
 
 type Props = {
   label: string;
   value: string;
-  icon: 'map-pin' | 'currency-inr' | 'silverware-cloche' | 'bowl-steam' | 'storefront-outline';
+  icon:
+    | "map-pin"
+    | "currency-inr"
+    | "silverware-clean"
+    | "bowl-hot"
+    | "storefront-outline";
   onPress: () => void;
 };
 
 export function FilterCard({ label, value, icon, onPress }: Props) {
   return (
-    <TouchableOpacity activeOpacity={0.78} onPress={onPress} style={styles.card}>
-      {icon === 'map-pin' ? (
+    <TouchableOpacity
+      activeOpacity={0.78}
+      onPress={onPress}
+      style={styles.card}
+    >
+      {icon === "map-pin" ? (
         <Feather name="map-pin" size={31} color={colors.primaryDark} />
       ) : (
-        <MaterialCommunityIcons name={icon} size={34} color={colors.primaryDark} />
+        <MaterialCommunityIcons
+          name={icon as any}
+          size={34}
+          color={colors.primaryDark}
+        />
       )}
       <Text style={styles.label}>{label}</Text>
-      <Text style={styles.value} numberOfLines={1}>{value}</Text>
+      <Text style={styles.value} numberOfLines={1}>
+        {value}
+      </Text>
       <Feather name="chevron-down" size={18} color={colors.primaryDark} />
     </TouchableOpacity>
   );
@@ -27,7 +42,7 @@ export function FilterCard({ label, value, icon, onPress }: Props) {
 
 const styles = StyleSheet.create({
   card: {
-    alignItems: 'center',
+    alignItems: "center",
     backgroundColor: colors.beigeSoft,
     borderColor: colors.border,
     borderRadius: radius.md,
@@ -43,12 +58,12 @@ const styles = StyleSheet.create({
   label: {
     color: colors.text,
     fontSize: 12,
-    fontWeight: '800',
+    fontWeight: "800",
   },
   value: {
     color: colors.text,
-    fontFamily: 'Georgia',
+    fontFamily: "Georgia",
     fontSize: 17,
-    maxWidth: '100%',
+    maxWidth: "100%",
   },
 });

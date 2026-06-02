@@ -1,6 +1,7 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
+import { LogoBadge } from '@/components/common/LogoBadge';
 import { colors } from '@/theme';
 import { useAuthStore } from '@/store/authStore';
 
@@ -14,6 +15,7 @@ export function RootNavigator() {
   if (isHydrating) {
     return (
       <View style={styles.loader}>
+        <LogoBadge size={96} />
         <ActivityIndicator color={colors.primary} />
       </View>
     );
@@ -27,6 +29,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.background,
     flex: 1,
+    gap: 18,
     justifyContent: 'center',
   },
 });

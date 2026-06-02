@@ -4,14 +4,21 @@
     "slug": "faattsoo-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
+    "icon": "./assets/faattsoo-logo.png",
     "userInterfaceStyle": "light",
     "scheme": "faattsoo",
     "assetBundlePatterns": ["**/*"],
+    "splash": {
+      "image": "./assets/faattsoo-logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F7F1EA"
+    },
     "ios": {
       "supportsTablet": false
     },
     "android": {
       "adaptiveIcon": {
+        "foregroundImage": "./assets/faattsoo-logo.png",
         "backgroundColor": "#F7F1EA"
       }
     },

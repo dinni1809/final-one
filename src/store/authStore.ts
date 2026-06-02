@@ -1,9 +1,9 @@
-import * as SecureStore from 'expo-secure-store';
-import { create } from 'zustand';
+import { secureStorage } from "@/utils/secureStorage";
+import { create } from "zustand";
 
-import { storageKeys } from '@/constants/storageKeys';
-import { authService } from '@/services/authService';
-import type { User } from '@/types/auth';
+import { storageKeys } from "@/constants/storageKeys";
+import { authService } from "@/services/authService";
+import type { User } from "@/types/auth";
 
 type AuthState = {
   user: User | null;
@@ -25,18 +25,22 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ user: auth.user, isAuthenticated: true });
   },
   async googleLogin() {
-    const auth = await authService.googleLogin('expo-google-token');
+    const auth = await authService.googleLogin("expo-google-token");
     await authService.persistSession(auth);
     set({ user: auth.user, isAuthenticated: true });
   },
   async hydrate() {
-    const token = await SecureStore.getItemAsync(storageKeys.accessToken);
+    const token = await secureStorage.getItemAsync(storageKeys.accessToken);
     if (!token) {
       set({ isHydrating: false, isAuthenticated: false });
       return;
     }
     set({
-      user: { id: 'user-1', name: 'FAATTSOO Guest', email: 'guest@faattsoo.local' },
+      user: {
+        id: "user-1",
+        name: "FAATTSOO Guest",
+        email: "guest@faattsoo.local",
+      },
       isAuthenticated: true,
       isHydrating: false,
     });

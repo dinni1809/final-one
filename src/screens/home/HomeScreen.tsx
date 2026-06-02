@@ -19,7 +19,7 @@ type Nav = NativeStackNavigationProp<HomeStackParamList>;
 
 export function HomeScreen() {
   const navigation = useNavigation<Nav>();
-  const rootNavigation = useNavigation();
+  const rootNavigation = useNavigation<any>();
   const { data: offers = [] } = useTopOffers();
   const { data: trending = [] } = useTrendingRestaurants();
 
@@ -45,7 +45,12 @@ export function HomeScreen() {
           </View>
           <Text style={styles.ctaTitle}>Discover Restaurants</Text>
           <Text style={styles.ctaCopy}>Explore curated dining experiences{'\n'}across Bangalore.</Text>
-          <PrimaryButton title="Start Exploring" light icon="arrow-right" onPress={() => rootNavigation.navigate('Discover' as never)} />
+          <PrimaryButton
+            title="Start Exploring"
+            light
+            icon="arrow-right"
+            onPress={() => rootNavigation.navigate('Tabs' as never, { screen: 'Discover' } as never)}
+          />
         </LinearGradient>
 
         <View style={styles.sectionCard}>

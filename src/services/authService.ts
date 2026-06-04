@@ -37,11 +37,17 @@ export const authService = {
     return normalizeAuth(unwrap(data));
   },
 
-  async register(name: string, email: string, password: string) {
+  async register(
+    name: string,
+    email: string,
+    password: string,
+    username: string,
+  ) {
     const { data } = await apiClient.post<ApiEnvelope<ApiAuthResponse>>(
       "/auth/register",
       {
         name,
+        username,
         email,
         password,
       },

@@ -15,15 +15,26 @@ type Props = NativeStackScreenProps<AuthStackParamList, "SignUp">;
 export function SignUpScreen({ navigation }: Props) {
   const register = useAuthStore((state) => state.register);
   const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
   const createAccount = async () => {
-    if (name.trim().length < 2 || !email.includes("@") || password.length < 4) {
+    const trimmedUsername = username.trim();
+    const trimmedName = name.trim();
+    const trimmedEmail = email.trim();
+    const usernameIsValid = /^[a-zA-Z0-9_]{3,20}$/.test(trimmedUsername);
+
+    if (
+      trimmedName.length < 2 ||
+      !usernameIsValid ||
+      !trimmedEmail.includes("@") ||
+      password.length < 4
+    ) {
       Alert.alert(
         "Complete details",
-        "Add your name, email, and a password with at least 4 characters.",
+        "Enter your full name, a valid username, email, and a password with at least 4 characters.",
       );
       return;
     }
@@ -32,7 +43,12 @@ export function SignUpScreen({ navigation }: Props) {
     try {
       console.log("REGISTER START");
 
-      const result = await register(name.trim(), email.trim(), password);
+      const result = await register(
+        trimmedName,
+        trimmedEmail,
+        password,
+        trimmedUsername,
+      );
 
       console.log("REGISTER SUCCESS", result);
 
@@ -59,6 +75,12 @@ export function SignUpScreen({ navigation }: Props) {
           placeholder="Full name"
           value={name}
           onChangeText={setName}
+        />
+        <AuthTextInput
+          icon="user"
+          placeholder="Username"
+          value={username}
+          onChangeText={setUsername}
         />
         <AuthTextInput
           icon="mail"

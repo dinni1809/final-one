@@ -2,12 +2,14 @@ const User = require("../models/User");
 
 exports.create = (data) => User.create(data);
 exports.findByEmail = (email) => User.findOne({ email });
+exports.findByUsername = (username) =>
+  User.findOne({ username: username.trim().toLowerCase() });
 exports.findByEmailWithPassword = (email) =>
   User.findOne({ email }).select("+password");
 exports.findByIdentifierWithPassword = (identifier) => {
   const normalized = identifier.trim().toLowerCase();
   return User.findOne({
-    $or: [{ email: normalized }, { name: identifier.trim() }],
+    $or: [{ email: normalized }, { username: normalized }],
   }).select("+password");
 };
 exports.findById = (id) => User.findById(id);

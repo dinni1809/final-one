@@ -2,6 +2,15 @@ const Joi = require("joi");
 
 exports.registerValidator = Joi.object({
   name: Joi.string().min(2).max(80).required(),
+  username: Joi.string()
+    .pattern(/^[a-zA-Z0-9_]+$/)
+    .min(3)
+    .max(20)
+    .required()
+    .messages({
+      "string.pattern.base":
+        "Username can only contain letters, numbers, and underscores",
+    }),
   email: Joi.string().email().required(),
   password: Joi.string().min(6).required(),
 });

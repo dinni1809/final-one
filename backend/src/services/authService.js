@@ -9,13 +9,20 @@ const sanitizeUser = (user) => {
   return payload;
 };
 
-exports.register = async ({ name, email, password }) => {
+exports.register = async ({ name, username, email, password }) => {
   const normalizedEmail = email.toLowerCase();
-  const existingUser = await userRepository.findByEmail(normalizedEmail);
-  if (existingUser) throw new ApiError(409, "Email already registered");
+  const normalizedUsername = username.trim().toLowerCase();
+
+  const existingEmail = await userRepository.findByEmail(normalizedEmail);
+  if (existingEmail) throw new ApiError(409, "Email already registered");
+
+  const existingUsername =
+    await userRepository.findByUsername(normalizedUsername);
+  if (existingUsername) throw new ApiError(409, "Username already exists");
 
   const createdUser = await userRepository.create({
     name,
+    username: normalizedUsername,
     email: normalizedEmail,
     password,
   });
@@ -28,8 +35,12 @@ exports.login = async ({ identifier, email, password }) => {
   if (!lookup) throw new ApiError(400, "Identifier or email is required");
 
   const user = await userRepository.findByIdentifierWithPassword(lookup);
-  if (!user || !(await user.comparePassword(password))) {
-    throw new ApiError(401, "Invalid email, username, or password");
+  if (!user) {
+    throw new ApiError(404, "Account not found");
+  }
+
+  if (!(await user.comparePassword(password))) {
+    throw new ApiError(401, "Invalid password");
   }
 
   const sanitized = sanitizeUser(user);

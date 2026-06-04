@@ -11,7 +11,12 @@ type AuthState = {
   isHydrating: boolean;
   isAuthenticated: boolean;
   login: (identifier: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  register: (
+    name: string,
+    email: string,
+    password: string,
+    username: string,
+  ) => Promise<void>;
   googleLogin: () => Promise<void>;
   hydrate: () => Promise<void>;
   logout: () => Promise<void>;
@@ -27,8 +32,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ user: auth.user, isAuthenticated: true, isHydrating: false });
     await useFavoriteStore.getState().loadFavorites();
   },
-  async register(name, email, password) {
-    const auth = await authService.register(name, email, password);
+  async register(name, email, password, username) {
+    const auth = await authService.register(name, email, password, username);
     await authService.persistSession(auth);
     set({ user: auth.user, isAuthenticated: true, isHydrating: false });
     await useFavoriteStore.getState().loadFavorites();

@@ -1,4 +1,4 @@
-import type { Restaurant, RestaurantFilters } from "@/types/restaurant";
+import type { Restaurant, RestaurantFilters, PriceCategory } from "@/types/restaurant";
 import {
   normalizeAreaValue,
   normalizeCuisineValues,
@@ -30,6 +30,8 @@ type ApiRestaurant = Partial<
   bannerImageUrl?: string | null;
   isFeatured?: boolean;
   featured?: boolean;
+  price_range?: string;
+  faattsoo_rating?: number;
 };
 type ApiRestaurantDetails = ApiRestaurant | { restaurant: ApiRestaurant };
 type ApiFilterOptions = {
@@ -72,24 +74,35 @@ const normalizeRestaurant = (item: ApiRestaurant): Restaurant => {
     resolvedUrl: image,
   });
 
+  const rawPrice = item.price_range ?? item.priceCategory ?? "Mid";
+  const priceMap: Record<string, PriceCategory> = {
+    budget: "Budget",
+    mid: "Mid",
+    premium: "Premium",
+    luxury: "Luxury",
+    Budget: "Budget",
+    Mid: "Mid",
+    Premium: "Premium",
+    Luxury: "Luxury",
+  };
+  const priceCategory = priceMap[rawPrice] ?? "Mid";
+
   return {
     id,
     name,
     cuisines,
     area: normalizeAreaValue(item.area),
     city: item.city ?? "Bangalore",
-    rating: item.rating ?? 0,
+    rating: item.rating ?? (item.faattsoo_rating ? item.faattsoo_rating / 2 : 0),
     reviewCount: item.reviewCount ?? 0,
     priceLevel:
       item.priceLevel ??
       Math.max(
         1,
-        ["Budget", "Mid", "Premium", "Luxury"].indexOf(
-          item.priceCategory ?? "Mid",
-        ) + 1,
+        ["Budget", "Mid", "Premium", "Luxury"].indexOf(priceCategory) + 1,
       ),
-    priceCategory: item.priceCategory ?? "Mid",
-    style: item.style ?? "Restaurant",
+    priceCategory,
+    style: item.style ?? cuisines.find((c) => ["Cafe", "Buffet", "Fine Dining", "Bakery", "Dessert"].includes(c)) ?? "Restaurant",
     description: item.description ?? "Explore this restaurant on FAATTSOO.",
     image,
     coverImage: item.coverImage ?? image,
@@ -105,31 +118,14 @@ const cleanFilters = (filters?: RestaurantFilters) =>
     Object.entries(filters ?? {}).filter(([, value]) => Boolean(value)),
   );
 
-const applyClientSideFilters = (
-  restaurants: Restaurant[],
-  filters?: RestaurantFilters,
-) => {
-  const { area, cuisine } = filters ?? {};
-  if (!area && !cuisine) return restaurants;
-
-  return restaurants.filter(
-    (r) =>
-      restaurantMatchesArea(r.area, area) &&
-      restaurantMatchesCuisine(r.cuisines, cuisine),
-  );
-};
-
 export const restaurantService = {
   async getRestaurants(filters?: RestaurantFilters) {
-    // Area/cuisine are matched client-side so comma-separated DB values still filter correctly.
-    const { area, cuisine, ...apiFilters } = filters ?? {};
     const { data } = await apiClient.get<
       ApiEnvelope<ApiList<ApiRestaurant>> | ApiList<ApiRestaurant>
     >("/restaurants/filter", {
-      params: cleanFilters(apiFilters),
+      params: { ...cleanFilters(filters), limit: 50 },
     });
-    const normalized = unwrapList(data).map(normalizeRestaurant);
-    return applyClientSideFilters(normalized, { area, cuisine });
+    return unwrapList(data).map(normalizeRestaurant);
   },
   async getRestaurantById(id: string) {
     const { data } = await apiClient.get<

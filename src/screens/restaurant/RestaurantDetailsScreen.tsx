@@ -16,6 +16,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  ActivityIndicator,
 } from "react-native";
 
 import { CategoryTabs } from "@/components/restaurant/CategoryTabs";
@@ -51,9 +52,17 @@ export function RestaurantDetailsScreen() {
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewTitle, setReviewTitle] = useState("");
   const [reviewBody, setReviewBody] = useState("");
-  const { data: restaurant } = useRestaurantDetails(restaurantId);
+  const {
+    data: restaurant,
+    isLoading: isLoadingRestaurant,
+    isError: isErrorRestaurant,
+  } = useRestaurantDetails(restaurantId);
   const { data: menu = [] } = useMenu(restaurantId, category);
-  const { data: rating } = useRatingSummary(restaurantId);
+  const {
+    data: rating,
+    isLoading: isLoadingRating,
+    isError: isErrorRating,
+  } = useRatingSummary(restaurantId);
   const { data: reviews = [], isLoading: reviewsLoading } = useReviews(
     restaurantId,
     sortBy,
@@ -119,8 +128,37 @@ export function RestaurantDetailsScreen() {
     }
   };
 
-  if (!restaurant || !rating) {
-    return <Screen />;
+  if (isLoadingRestaurant || isLoadingRating) {
+    return (
+      <Screen>
+        <View style={styles.loaderContainer}>
+          <LogoBadge size={80} />
+          <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 24 }} />
+          <Text style={styles.loaderText}>Loading culinary details...</Text>
+        </View>
+      </Screen>
+    );
+  }
+
+  if (isErrorRestaurant || isErrorRating || !restaurant || !rating) {
+    return (
+      <Screen>
+        <View style={styles.errorContainer}>
+          <Feather name="alert-circle" size={48} color={colors.danger} />
+          <Text style={styles.errorTitle}>Details Unavailable</Text>
+          <Text style={styles.errorSubtitle}>
+            We're unable to load the restaurant details at this moment. Please check your connection and try again.
+          </Text>
+          <TouchableOpacity
+            style={styles.errorButton}
+            activeOpacity={0.8}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.errorButtonText}>Go Back</Text>
+          </TouchableOpacity>
+        </View>
+      </Screen>
+    );
   }
 
   return (
@@ -759,5 +797,51 @@ const styles = StyleSheet.create({
   },
   reviewsList: {
     gap: 12,
+  },
+  loaderContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.background,
+    padding: 24,
+  },
+  loaderText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    fontWeight: "700",
+    marginTop: 12,
+  },
+  errorContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.background,
+    padding: 32,
+    gap: 12,
+  },
+  errorTitle: {
+    fontSize: 20,
+    fontFamily: "Georgia",
+    fontWeight: "700",
+    color: colors.primaryDark,
+  },
+  errorSubtitle: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: "center",
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  errorButton: {
+    backgroundColor: colors.primaryDark,
+    borderRadius: radius.md,
+    paddingVertical: 12,
+    paddingHorizontal: 28,
+    ...shadows.soft,
+  },
+  errorButtonText: {
+    color: colors.white,
+    fontSize: 14,
+    fontWeight: "800",
   },
 });

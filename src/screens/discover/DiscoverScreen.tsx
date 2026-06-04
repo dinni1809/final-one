@@ -2,14 +2,13 @@ import { DrawerActions, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useMemo, useState } from "react";
-import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Feather } from "@expo/vector-icons";
 
 import { RestaurantCard } from "@/components/cards/RestaurantCard";
-import { DecorativeDivider } from "@/components/common/DecorativeDivider";
 import { IconButton } from "@/components/common/IconButton";
 import { LogoBadge } from "@/components/common/LogoBadge";
 import { Screen } from "@/components/common/Screen";
-import { SectionHeader } from "@/components/common/SectionHeader";
 import { FilterDropdown } from "@/components/forms/FilterDropdown";
 import { useRestaurants } from "@/hooks/useRestaurants";
 import { useRestaurantFilters } from "@/hooks/useRestaurantFilters";
@@ -25,12 +24,30 @@ import { printDiscoverAuditReport } from "@/utils/discoverAudit";
 
 type Nav = NativeStackNavigationProp<DiscoverStackParamList>;
 
+const sortLabels = {
+  recommended: "Recommended",
+  rating: "Rating",
+  popular: "Popular",
+};
+
 export function DiscoverScreen() {
   const navigation = useNavigation<Nav>();
   const rootNavigation = useNavigation();
   const [openFilter, setOpenFilter] = useState<string | null>(null);
+  const [openSort, setOpenSort] = useState(false);
+  const [showAll, setShowAll] = useState(false);
+
   const filters = useFilterStore((state) => state.filters);
   const setFilter = useFilterStore((state) => state.setFilter);
+  const clearFilters = useFilterStore((state) => state.clearFilters);
+
+  // Default sort to "recommended" if not set
+  useEffect(() => {
+    if (!filters.sort) {
+      setFilter("sort", "recommended");
+    }
+  }, [filters.sort]);
+
   const { data: restaurants = [] } = useRestaurants(filters);
   const {
     data: filterOptions = {
@@ -60,35 +77,46 @@ export function DiscoverScreen() {
   useEffect(() => {
     if (restaurants.length === 0) return;
     printDiscoverAuditReport(restaurants);
+
+    // Part 4 debug logs requirement:
+    console.log(`[Discover DEBUG] Total restaurants fetched: ${restaurants.length}`);
+    const hsrCount = restaurants.filter((r: Restaurant) => r.area.toLowerCase().includes("hsr layout")).length;
+    console.log(`[Discover DEBUG] ${restaurants.length} restaurants loaded, ${hsrCount} restaurants matched HSR Layout`);
   }, [restaurants]);
+
+  const visibleRestaurants = showAll ? restaurants : restaurants.slice(0, 6);
 
   return (
     <Screen>
       <Pressable
         style={{ flex: 1 }}
-        onPress={() => setOpenFilter(null)}
+        onPress={() => {
+          setOpenFilter(null);
+          setOpenSort(false);
+        }}
       >
         <ScrollView
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
+          {/* Header Section */}
           <View style={styles.header}>
-            <LogoBadge size={82} />
+            <LogoBadge size={74} />
             <View style={styles.headerIcons}>
               <IconButton
                 name="heart"
-                size={27}
+                size={25}
                 onPress={() => rootNavigation.navigate("Bookmarks" as never)}
               />
               <IconButton
                 name="user"
-                size={27}
+                size={25}
                 onPress={() => rootNavigation.navigate("Profile" as never)}
               />
               <IconButton
                 name="menu"
-                size={29}
+                size={27}
                 onPress={() =>
                   rootNavigation.dispatch(DrawerActions.openDrawer())
                 }
@@ -96,111 +124,221 @@ export function DiscoverScreen() {
             </View>
           </View>
 
-          <View style={styles.heroSketch} />
-          <Text style={styles.title}>Discover Restaurants</Text>
-          <DecorativeDivider />
-          <Text style={styles.subtitle}>Curated places. Great experiences.</Text>
-
-          <View style={[styles.filterPanel, openFilter ? { zIndex: 9998, elevation: 20 } : null]}>
-            <FilterDropdown
-              label="Area"
-              value={filters.area}
-              placeholder="Select area"
-              options={dropdownOptions.area}
-              open={openFilter === "area"}
-              onOpen={() => setOpenFilter(openFilter === "area" ? null : "area")}
-              onClose={() => setOpenFilter(null)}
-              onSelect={(value) => {
-                setFilter("area", value as never);
-                setOpenFilter(null);
-              }}
-            />
-            <FilterDropdown
-              label="Price"
-              value={filters.price}
-              placeholder="Select price"
-              options={dropdownOptions.price}
-              open={openFilter === "price"}
-              onOpen={() => setOpenFilter(openFilter === "price" ? null : "price")}
-              onClose={() => setOpenFilter(null)}
-              onSelect={(value) => {
-                setFilter("price", value as never);
-                setOpenFilter(null);
-              }}
-            />
-            <FilterDropdown
-              label="Menu item"
-              value={filters.menuItem}
-              placeholder="Select item"
-              options={dropdownOptions.menuItem}
-              open={openFilter === "menuItem"}
-              onOpen={() => setOpenFilter(openFilter === "menuItem" ? null : "menuItem")}
-              onClose={() => setOpenFilter(null)}
-              onSelect={(value) => {
-                setFilter("menuItem", value as never);
-                setOpenFilter(null);
-              }}
-            />
-            <FilterDropdown
-              label="Cuisine"
-              value={filters.cuisine}
-              placeholder="Select cuisine"
-              options={dropdownOptions.cuisine}
-              open={openFilter === "cuisine"}
-              onOpen={() => setOpenFilter(openFilter === "cuisine" ? null : "cuisine")}
-              onClose={() => setOpenFilter(null)}
-              onSelect={(value) => {
-                setFilter("cuisine", value as never);
-                setOpenFilter(null);
-              }}
-            />
-            <FilterDropdown
-              label="Type"
-              value={filters.style}
-              placeholder="Select type"
-              options={dropdownOptions.style}
-              open={openFilter === "style"}
-              onOpen={() => setOpenFilter(openFilter === "style" ? null : "style")}
-              onClose={() => setOpenFilter(null)}
-              onSelect={(value) => {
-                setFilter("style", value as never);
-                setOpenFilter(null);
-              }}
-            />
+          {/* Caption banner - matching mockup divider script styling */}
+          <View style={styles.captionContainer}>
+            <View style={styles.captionLine} />
+            <Text style={styles.captionSymbol}>✦</Text>
+            <Text style={styles.captionText}>Discover restaurants curated for great experiences.</Text>
+            <Text style={styles.captionSymbol}>✦</Text>
+            <View style={styles.captionLine} />
           </View>
 
-          <View style={styles.tables}>
-            <SectionHeader
-              title="Top Tables This Week"
-              onViewAll={() => navigation.navigate("RestaurantList")}
-            />
-            <Text style={styles.sectionCopy}>
-              Handpicked restaurants for memorable dining experiences.
-            </Text>
-            {restaurants.length === 0 ? (
-              <Text style={styles.empty}>
-                No restaurants found. Try changing a dropdown.
+          {/* Filters Grid Section (2 columns) — no zIndex override needed here, FilterDropdown manages its own */}
+          <View style={styles.filterGrid}>
+            {/* Row 1: Area | Cuisine */}
+            <View style={styles.filterRow}>
+              <View style={styles.gridCol}>
+                <FilterDropdown
+                  label="Area"
+                  value={filters.area}
+                  placeholder="Select area"
+                  options={dropdownOptions.area}
+                  open={openFilter === "area"}
+                  onOpen={() => setOpenFilter(openFilter === "area" ? null : "area")}
+                  onClose={() => setOpenFilter(null)}
+                  onSelect={(value) => {
+                    setFilter("area", value as never);
+                    setOpenFilter(null);
+                  }}
+                  iconName="map-pin"
+                />
+              </View>
+              <View style={styles.gridCol}>
+                <FilterDropdown
+                  label="Cuisine"
+                  value={filters.cuisine}
+                  placeholder="Select cuisine"
+                  options={dropdownOptions.cuisine}
+                  open={openFilter === "cuisine"}
+                  onOpen={() => setOpenFilter(openFilter === "cuisine" ? null : "cuisine")}
+                  onClose={() => setOpenFilter(null)}
+                  onSelect={(value) => {
+                    setFilter("cuisine", value as never);
+                    setOpenFilter(null);
+                  }}
+                  iconName="coffee"
+                />
+              </View>
+            </View>
+
+            {/* Row 2: Price | Type */}
+            <View style={styles.filterRow}>
+              <View style={styles.gridCol}>
+                <FilterDropdown
+                  label="Price"
+                  value={filters.price}
+                  placeholder="Select price"
+                  options={dropdownOptions.price}
+                  open={openFilter === "price"}
+                  onOpen={() => setOpenFilter(openFilter === "price" ? null : "price")}
+                  onClose={() => setOpenFilter(null)}
+                  onSelect={(value) => {
+                    setFilter("price", value as never);
+                    setOpenFilter(null);
+                  }}
+                  iconText="₹"
+                />
+              </View>
+              <View style={styles.gridCol}>
+                <FilterDropdown
+                  label="Type of Restaurant"
+                  value={filters.style}
+                  placeholder="All Types"
+                  options={dropdownOptions.style}
+                  open={openFilter === "style"}
+                  onOpen={() => setOpenFilter(openFilter === "style" ? null : "style")}
+                  onClose={() => setOpenFilter(null)}
+                  onSelect={(value) => {
+                    setFilter("style", value as never);
+                    setOpenFilter(null);
+                  }}
+                  iconName="home"
+                />
+              </View>
+            </View>
+
+            {/* Row 3: Menu Item | Rating */}
+            <View style={styles.filterRow}>
+              <View style={styles.gridCol}>
+                <FilterDropdown
+                  label="Menu Item"
+                  value={filters.menuItem}
+                  placeholder="Select item"
+                  options={dropdownOptions.menuItem}
+                  open={openFilter === "menuItem"}
+                  onOpen={() => setOpenFilter(openFilter === "menuItem" ? null : "menuItem")}
+                  onClose={() => setOpenFilter(null)}
+                  onSelect={(value) => {
+                    setFilter("menuItem", value as never);
+                    setOpenFilter(null);
+                  }}
+                  iconName="book-open"
+                />
+              </View>
+              <View style={styles.gridCol}>
+                <FilterDropdown
+                  label="Rating"
+                  value={filters.rating}
+                  placeholder="Any rating"
+                  options={["Any rating", "3.0+", "4.0+", "4.5+"]}
+                  open={openFilter === "rating"}
+                  onOpen={() => setOpenFilter(openFilter === "rating" ? null : "rating")}
+                  onClose={() => setOpenFilter(null)}
+                  onSelect={(value) => {
+                    setFilter("rating", value === "Any rating" ? undefined : value);
+                    setOpenFilter(null);
+                  }}
+                  iconName="star"
+                />
+              </View>
+            </View>
+          </View>
+
+          {/* Results Header (Count + Sort) */}
+          <View style={styles.resultsHeader}>
+            <View style={styles.resultsCountRow}>
+              <Feather name="grid" size={15} color={colors.textSecondary} />
+              <Text style={styles.resultsCountText}>
+                {restaurants.length} {restaurants.length === 1 ? "restaurant" : "restaurants"} found
               </Text>
-            ) : (
-              <FlatList
-                data={restaurants.slice(0, 8)}
-                horizontal
-                keyExtractor={(item) => item.id}
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.list}
-                renderItem={({ item }) => (
-                  <RestaurantCard
-                    restaurant={item}
-                    onPress={() =>
-                      navigation.navigate("RestaurantDetails", {
-                        restaurantId: item.id,
-                      })
-                    }
-                  />
-                )}
-              />
-            )}
+            </View>
+            <View style={styles.sortWrapper}>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => setOpenSort(!openSort)}
+                style={styles.sortButton}
+              >
+                <Feather name="sliders" size={12} color={colors.primaryDark} />
+                <Text style={styles.sortButtonText}>
+                  Sort: {sortLabels[filters.sort as keyof typeof sortLabels] ?? "Recommended"}
+                </Text>
+                <Feather name="chevron-down" size={12} color={colors.primaryDark} />
+              </TouchableOpacity>
+
+              {openSort && (
+                <View style={styles.sortDropdown}>
+                  {(Object.keys(sortLabels) as Array<keyof typeof sortLabels>).map((key) => (
+                    <TouchableOpacity
+                      key={key}
+                      style={[
+                        styles.sortDropdownItem,
+                        filters.sort === key && styles.sortDropdownItemActive,
+                      ]}
+                      onPress={() => {
+                        setFilter("sort", key);
+                        setOpenSort(false);
+                      }}
+                    >
+                      <Text
+                        style={[
+                          styles.sortDropdownItemText,
+                          filters.sort === key && styles.sortDropdownItemTextActive,
+                        ]}
+                      >
+                        {sortLabels[key]}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </View>
           </View>
+
+          {/* Restaurants Grid List */}
+          {restaurants.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Feather name="search" size={40} color={colors.textSecondary} />
+              <Text style={styles.emptyTitle}>No Restaurants Found</Text>
+              <Text style={styles.emptySubtitle}>
+                Try clearing or adjusting your filters to discover other dining spots.
+              </Text>
+              <TouchableOpacity
+                style={styles.clearBtn}
+                activeOpacity={0.8}
+                onPress={() => clearFilters()}
+              >
+                <Text style={styles.clearBtnText}>Clear Filters</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.gridContainer}>
+              {visibleRestaurants.map((item: Restaurant) => (
+                <RestaurantCard
+                  key={item.id}
+                  restaurant={item}
+                  compact
+                  style={styles.gridCard}
+                  onPress={() =>
+                    navigation.navigate("RestaurantDetails", {
+                      restaurantId: item.id,
+                    })
+                  }
+                />
+              ))}
+            </View>
+          )}
+
+          {/* Show More Button (matches mockup) */}
+          {restaurants.length > 6 && !showAll && (
+            <TouchableOpacity
+              activeOpacity={0.8}
+              style={styles.showMoreButton}
+              onPress={() => setShowAll(true)}
+            >
+              <Text style={styles.showMoreBtnText}>Show More</Text>
+              <Feather name="chevron-down" size={14} color={colors.primaryDark} />
+            </TouchableOpacity>
+          )}
         </ScrollView>
       </Pressable>
       <LinearGradient
@@ -214,62 +352,199 @@ export function DiscoverScreen() {
 const styles = StyleSheet.create({
   content: {
     paddingBottom: 120,
-    paddingHorizontal: 14,
-    paddingTop: 12,
+    paddingHorizontal: 12,
+    paddingTop: 8,
   },
   header: {
     alignItems: "center",
     flexDirection: "row",
     justifyContent: "space-between",
+    marginTop: 4,
   },
   headerIcons: {
     flexDirection: "row",
     gap: 8,
   },
-  heroSketch: {
-    borderColor: "#D6A36E",
-    borderWidth: 1,
-    height: 150,
-    opacity: 0.22,
-    position: "absolute",
-    right: 0,
-    top: 112,
-    width: 160,
+  captionContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginVertical: 14,
+    gap: 6,
+    paddingHorizontal: 4,
   },
-  title: {
-    ...typography.display,
-    color: colors.primaryDark,
-    marginTop: 40,
+  captionLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.border,
+    opacity: 0.8,
   },
-  subtitle: {
-    color: colors.primaryDark,
+  captionSymbol: {
+    fontSize: 10,
+    color: colors.primary,
+  },
+  captionText: {
+    fontSize: 12,
     fontFamily: "Georgia",
-    fontSize: 22,
-    marginTop: 22,
+    fontWeight: "700",
+    color: colors.primaryDark,
+    textAlign: "center",
   },
-  filterPanel: {
-    flexDirection: "column",
-    marginTop: 30,
+  filterGrid: {
+    gap: 8,
+    marginTop: 2,
+    // High base z-index so every FilterDropdown (zIndex:10000) paints above
+    // resultsHeader (zIndex:0) and the restaurant card grid (zIndex:0).
+    // Do NOT add overflow:hidden here — that would clip the floating panels.
+    zIndex: 100,
   },
-  tables: {
-    backgroundColor: "rgba(255,255,255,0.44)",
-    borderRadius: radius.lg,
-    marginTop: 26,
-    padding: 16,
+  filterRow: {
+    flexDirection: "row",
+    gap: 8,
+    // Each row must NOT create its own opaque stacking context, so no zIndex here.
+  },
+  gridCol: {
+    flex: 1,
+    // No zIndex — FilterDropdown's wrap style handles its own elevation.
+  },
+  resultsHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 18,
+    marginBottom: 8,
+    // Must be below filter grid in stacking order
+    zIndex: 0,
+  },
+  resultsCountRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  resultsCountText: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  sortWrapper: {
+    position: "relative",
+  },
+  sortButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.beigeSoft,
+    borderColor: colors.border,
+    borderWidth: 1,
+    borderRadius: radius.sm,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    gap: 6,
     ...shadows.soft,
   },
-  sectionCopy: {
-    color: colors.textSecondary,
-    fontSize: 14,
-    marginBottom: 18,
+  sortButtonText: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: colors.primaryDark,
   },
-  list: {
-    paddingBottom: 4,
+  sortDropdown: {
+    position: "absolute",
+    top: 36,
+    right: 0,
+    backgroundColor: "#FAF6EE",
+    borderColor: "#D6A36E",
+    borderWidth: 1,
+    borderRadius: radius.sm,
+    width: 140,
+    ...shadows.card,
+    zIndex: 9999,
+    elevation: 20,
+    paddingVertical: 4,
   },
-  empty: {
+  sortDropdownItem: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  sortDropdownItemActive: {
+    backgroundColor: "#EADDC9",
+  },
+  sortDropdownItemText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#4A2C1A",
+  },
+  sortDropdownItemTextActive: {
+    color: "#8B4E12",
+  },
+  gridContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    marginTop: 4,
+    // Explicitly below filter dropdowns
+    zIndex: 0,
+  },
+  gridCard: {
+    width: "48.5%",
+    marginRight: 0,
+    marginBottom: 10,
+    zIndex: 0,
+  },
+  showMoreButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.beigeSoft,
+    borderColor: colors.border,
+    borderWidth: 1,
+    borderRadius: radius.md,
+    paddingVertical: 12,
+    marginTop: 12,
+    gap: 6,
+    ...shadows.soft,
+  },
+  showMoreBtnText: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: colors.primaryDark,
+  },
+  emptyContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.beigeSoft,
+    borderRadius: radius.md,
+    paddingVertical: 44,
+    paddingHorizontal: 20,
+    marginTop: 8,
+    borderColor: colors.border,
+    borderWidth: 1,
+    ...shadows.soft,
+    gap: 8,
+    width: "100%",
+  },
+  emptyTitle: {
+    color: colors.primaryDark,
+    fontFamily: "Georgia",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  emptySubtitle: {
     color: colors.textSecondary,
-    fontSize: 14,
-    paddingVertical: 18,
+    fontSize: 13,
+    textAlign: "center",
+    lineHeight: 18,
+    marginBottom: 8,
+  },
+  clearBtn: {
+    backgroundColor: colors.primaryDark,
+    borderRadius: radius.sm,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    ...shadows.soft,
+  },
+  clearBtnText: {
+    color: colors.white,
+    fontSize: 13,
+    fontWeight: "800",
   },
   bottomWave: {
     bottom: -50,

@@ -23,6 +23,8 @@ type Props = {
   onOpen: () => void;
   onClose: () => void;
   onSelect: (value?: string) => void;
+  iconName?: any;
+  iconText?: string;
 };
 
 const popularAreas = [
@@ -71,6 +73,8 @@ export function FilterDropdown({
   onOpen,
   onClose,
   onSelect,
+  iconName,
+  iconText,
 }: Props) {
   const [searchQuery, setSearchQuery] = useState("");
   const [expanded, setExpanded] = useState(false);
@@ -157,7 +161,6 @@ export function FilterDropdown({
       (o) => !popularSet.has(o.toLowerCase())
     );
 
-    // Remaining are already sorted alphabetically since 'options' is sorted
     return [...popularInOptions, ...remaining];
   }, [options, label]);
 
@@ -171,7 +174,7 @@ export function FilterDropdown({
     if (label === "Area") return 8;
     if (label === "Cuisine") return 10;
     if (label === "Menu item") return 10;
-    return 12; // Type/Style
+    return 12;
   }, [label]);
 
   const visibleOptions = useMemo(() => {
@@ -182,220 +185,251 @@ export function FilterDropdown({
   }, [filteredOptions, searchQuery, expanded, limit]);
 
   return (
-    <View style={[styles.wrap, { zIndex: open ? 9999 : 1 }]}>
-      <Text style={styles.label}>{label}</Text>
+    <View
+      style={[
+        styles.wrap,
+        {
+          zIndex: open ? 9999 : 1,
+          elevation: open ? 30 : 0,
+        },
+      ]}
+    >
       <TouchableOpacity
         activeOpacity={0.78}
         onPress={onOpen}
         style={[styles.control, open && styles.controlActive]}
       >
-        <Text
-          style={[styles.value, !value && styles.placeholder]}
-          numberOfLines={1}
-        >
-          {value ?? placeholder}
-        </Text>
+        {/* Left Circular Icon Container */}
+        <View style={styles.iconCircle}>
+          {iconText ? (
+            <Text style={styles.iconSymbol}>{iconText}</Text>
+          ) : iconName ? (
+            <Feather name={iconName} size={18} color={colors.primaryDark} />
+          ) : (
+            <Feather name="filter" size={18} color={colors.primaryDark} />
+          )}
+        </View>
+
+        {/* Text Container: Label on top, Value below */}
+        <View style={styles.textContainer}>
+          <Text style={styles.label}>{label}</Text>
+          <Text
+            style={[styles.value, !value && styles.placeholder]}
+            numberOfLines={1}
+          >
+            {value ?? placeholder}
+          </Text>
+        </View>
+
+        {/* Right Chevron */}
         <Feather
           name={open ? "chevron-up" : "chevron-down"}
-          size={19}
+          size={16}
           color={colors.primaryDark}
         />
       </TouchableOpacity>
 
-      {open && (
-        <Pressable
-          onPress={() => {}}
-          style={{
-            position: "absolute",
-            top: 78,
-            left: 0,
-            right: 0,
-            zIndex: 9999,
-          }}
+      {/* Dropdown panel — absolutely positioned so it floats above siblings */}
+      <Animated.View
+        pointerEvents={open ? "auto" : "none"}
+        style={[
+          styles.dropdown,
+          {
+            opacity: dropdownOpacity,
+            transform: [{ translateY: dropdownTranslateY }],
+          },
+        ]}
+      >
+        {/* Search Box */}
+        <View style={styles.searchContainer}>
+          <Feather
+            name="search"
+            size={16}
+            color={colors.textSecondary}
+            style={styles.searchIcon}
+          />
+          <TextInput
+            style={styles.searchInput}
+            placeholder={`Search ${label.toLowerCase()}...`}
+            placeholderTextColor={colors.textSecondary}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            autoCorrect={false}
+            autoCapitalize="none"
+          />
+          {searchQuery ? (
+            <TouchableOpacity
+              onPress={() => setSearchQuery("")}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Feather name="x" size={16} color={colors.textSecondary} />
+            </TouchableOpacity>
+          ) : null}
+        </View>
+
+        {/* List of Options */}
+        <ScrollView
+          style={styles.dropdownScroll}
+          contentContainerStyle={styles.dropdownScrollContent}
+          nestedScrollEnabled={true}
+          keyboardShouldPersistTaps="handled"
+          bounces={false}
         >
-          <Animated.View
-            style={[
-              styles.dropdown,
-              {
-                opacity: dropdownOpacity,
-                transform: [{ translateY: dropdownTranslateY }],
-              },
-              { position: "relative", top: 0 },
-            ]}
-          >
-          {/* Search Box */}
-          <View style={styles.searchContainer}>
-            <Feather
-              name="search"
-              size={16}
-              color={colors.textSecondary}
-              style={styles.searchIcon}
-            />
-            <TextInput
-              style={styles.searchInput}
-              placeholder={`Search ${label.toLowerCase()}...`}
-              placeholderTextColor={colors.textSecondary}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              autoCorrect={false}
-              autoCapitalize="none"
-            />
-            {searchQuery ? (
+          {filteredOptions.length === 0 ? (
+            <Text style={styles.noResults}>No results found</Text>
+          ) : (
+            <>
+              {/* All Option */}
               <TouchableOpacity
-                onPress={() => setSearchQuery("")}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              >
-                <Feather name="x" size={16} color={colors.textSecondary} />
-              </TouchableOpacity>
-            ) : null}
-          </View>
-
-          {/* List of Options */}
-          <ScrollView
-            style={styles.dropdownScroll}
-            contentContainerStyle={styles.dropdownScrollContent}
-            nestedScrollEnabled={true}
-            keyboardShouldPersistTaps="handled"
-            bounces={false}
-          >
-            {filteredOptions.length === 0 ? (
-              <Text style={styles.noResults}>No results found</Text>
-            ) : (
-              <>
-                {/* All Option */}
-                <TouchableOpacity
-                  style={[styles.optionItem, !value && styles.optionItemSelected]}
-                  activeOpacity={0.7}
-                  onPress={() => handleSelect(undefined)}
-                >
-                  <Text
-                    style={[
-                      styles.optionText,
-                      !value && styles.optionTextSelected,
-                    ]}
-                  >
-                    All {label.toLowerCase()}
-                  </Text>
-                  {!value && (
-                    <Feather name="check" size={16} color="#8B4E12" />
-                  )}
-                </TouchableOpacity>
-
-                {/* Visible Options */}
-                {visibleOptions.map((item) => {
-                  const active = item === value;
-                  return (
-                    <TouchableOpacity
-                      key={item}
-                      style={[
-                        styles.optionItem,
-                        active && styles.optionItemSelected,
-                      ]}
-                      activeOpacity={0.7}
-                      onPress={() => handleSelect(item)}
-                    >
-                      <Text
-                        style={[
-                          styles.optionText,
-                          active && styles.optionTextSelected,
-                        ]}
-                      >
-                        {item}
-                      </Text>
-                      {active && (
-                        <Feather name="check" size={16} color="#8B4E12" />
-                      )}
-                    </TouchableOpacity>
-                  );
-                })}
-              </>
-            )}
-          </ScrollView>
-
-          {/* Show More / Show Less Button */}
-          {filteredOptions.length > limit &&
-            !searchQuery.trim() && (
-              <TouchableOpacity
-                style={styles.showMoreInline}
+                style={[styles.optionItem, !value && styles.optionItemSelected]}
                 activeOpacity={0.7}
-                onPress={() => setExpanded(!expanded)}
+                onPress={() => handleSelect(undefined)}
               >
-                <Text style={styles.showMoreText}>
-                  {expanded
-                    ? "Show Less"
-                    : `Show More (${
-                        filteredOptions.length - limit
-                      } more)`}
+                <Text
+                  style={[
+                    styles.optionText,
+                    !value && styles.optionTextSelected,
+                  ]}
+                >
+                  All {label.toLowerCase()}
                 </Text>
-                <Feather
-                  name={expanded ? "chevron-up" : "chevron-down"}
-                  size={14}
-                  color={colors.primaryDark}
-                  style={{ marginLeft: 4 }}
-                />
+                {!value && (
+                  <Feather name="check" size={16} color="#8B4E12" />
+                )}
               </TouchableOpacity>
-            )}
-          </Animated.View>
-        </Pressable>
-      )}
+
+              {/* Visible Options */}
+              {visibleOptions.map((item) => {
+                const active = item === value;
+                return (
+                  <TouchableOpacity
+                    key={item}
+                    style={[
+                      styles.optionItem,
+                      active && styles.optionItemSelected,
+                    ]}
+                    activeOpacity={0.7}
+                    onPress={() => handleSelect(item)}
+                  >
+                    <Text
+                      style={[
+                        styles.optionText,
+                        active && styles.optionTextSelected,
+                      ]}
+                    >
+                      {item}
+                    </Text>
+                    {active && (
+                      <Feather name="check" size={16} color="#8B4E12" />
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </>
+          )}
+        </ScrollView>
+
+        {/* Show More / Show Less Button */}
+        {filteredOptions.length > limit &&
+          !searchQuery.trim() && (
+            <TouchableOpacity
+              style={styles.showMoreInline}
+              activeOpacity={0.7}
+              onPress={() => setExpanded(!expanded)}
+            >
+              <Text style={styles.showMoreText}>
+                {expanded
+                  ? "Show Less"
+                  : `Show More (${
+                      filteredOptions.length - limit
+                    } more)`}
+              </Text>
+              <Feather
+                name={expanded ? "chevron-up" : "chevron-down"}
+                size={14}
+                color={colors.primaryDark}
+                style={{ marginLeft: 4 }}
+              />
+            </TouchableOpacity>
+          )}
+      </Animated.View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   wrap: {
-    marginBottom: 16,
     width: "100%",
     position: "relative",
-  },
-  label: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    fontWeight: "900",
-    letterSpacing: 0.8,
-    textTransform: "uppercase",
-    marginBottom: 6,
+    // Do NOT set overflow:hidden — dropdown must escape this boundary
   },
   control: {
     alignItems: "center",
     backgroundColor: colors.beigeSoft,
     borderColor: colors.border,
-    borderRadius: radius.xl,
+    borderRadius: radius.md,
     borderWidth: 1,
     flexDirection: "row",
-    gap: 10,
-    minHeight: 54,
-    paddingHorizontal: 16,
+    height: 56,
+    paddingLeft: 8,
+    paddingRight: 10,
     ...shadows.soft,
+    gap: 8,
   },
   controlActive: {
     borderColor: "#D6A36E",
     backgroundColor: "#FAF6EE",
   },
+  iconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.beige,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  iconSymbol: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: colors.primaryDark,
+  },
+  textContainer: {
+    flex: 1,
+    justifyContent: "center",
+    paddingRight: 4,
+  },
+  label: {
+    color: colors.textSecondary,
+    fontSize: 10,
+    fontWeight: "700",
+    lineHeight: 12,
+  },
   value: {
     color: colors.primaryDark,
-    flex: 1,
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: "800",
+    marginTop: 1,
+    lineHeight: 15,
   },
   placeholder: {
     color: colors.textSecondary,
-    fontWeight: "700",
+    fontWeight: "600",
   },
   dropdown: {
+    // Float over everything below: absolutely positioned from the control bottom
     position: "absolute",
-    top: 78,
+    top: 60,          // height of the control button (56px) + 4px gap
     left: 0,
     right: 0,
     backgroundColor: "#FAF6EE",
     borderColor: "#D6A36E",
-    borderRadius: radius.xl,
+    borderRadius: radius.md,
     borderWidth: 1,
-    maxHeight: 250,
+    maxHeight: 260,
     ...shadows.card,
-    zIndex: 9999,
-    elevation: 20,
-    overflow: "hidden",
+    zIndex: 10000,
+    elevation: 30,
+    // No overflow:hidden so shadow is visible on all sides
   },
   searchContainer: {
     flexDirection: "row",
@@ -403,10 +437,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderColor: "#EADDC9",
     borderWidth: 1,
-    borderRadius: radius.lg,
+    borderRadius: radius.sm,
     margin: 8,
-    paddingHorizontal: 10,
-    height: 40,
+    paddingHorizontal: 8,
+    height: 36,
   },
   searchIcon: {
     marginRight: 6,
@@ -414,7 +448,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     color: "#4A2C1A",
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "600",
     padding: 0,
   },
@@ -422,11 +456,11 @@ const styles = StyleSheet.create({
     flexGrow: 0,
   },
   dropdownScrollContent: {
-    paddingVertical: 4,
+    paddingVertical: 2,
   },
   optionItem: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -436,7 +470,7 @@ const styles = StyleSheet.create({
   },
   optionText: {
     color: "#4A2C1A",
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "700",
   },
   optionTextSelected: {
@@ -445,9 +479,9 @@ const styles = StyleSheet.create({
   },
   noResults: {
     color: colors.textSecondary,
-    fontSize: 14,
+    fontSize: 13,
     textAlign: "center",
-    paddingVertical: 16,
+    paddingVertical: 12,
     fontWeight: "600",
   },
   showMoreInline: {
@@ -456,12 +490,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderTopColor: "#EADDC9",
     borderTopWidth: 1,
-    paddingVertical: 10,
+    paddingVertical: 8,
     backgroundColor: "#EADDC9",
   },
   showMoreText: {
     color: colors.primaryDark,
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "800",
   },
 });

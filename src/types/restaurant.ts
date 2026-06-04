@@ -76,4 +76,6 @@ export type RestaurantFilters = {
   menuItem?: string;
   cuisine?: string;
   style?: string;
+  rating?: string;
+  sort?: string;
 };

@@ -58,27 +58,66 @@ exports.filter = async ({
   rating,
   style,
   menuItem,
+  sort,
   page,
   limit,
 }) => {
   const filter = {};
-  if (area) filter.area = area;
-  if (cuisine) filter.cuisine = cuisine;
-  if (price) filter.priceCategory = price;
-  if (rating) filter.rating = { $gte: Number(rating) };
-  if (style) filter.style = style;
 
+  // 1. Area: Case-insensitive substring match (handles comma-separated lists)
+  if (area) {
+    filter.area = { $regex: area.trim(), $options: "i" };
+  }
+
+  // 2. Cuisine and Style/Type (both are checked against the 'cuisine' field in MongoDB)
+  const cuisineConditions = [];
+  if (cuisine) {
+    cuisineConditions.push({ cuisine: { $regex: cuisine.trim(), $options: "i" } });
+  }
+  if (style) {
+    cuisineConditions.push({ cuisine: { $regex: style.trim(), $options: "i" } });
+  }
+  if (cuisineConditions.length > 0) {
+    filter.$and = cuisineConditions;
+  }
+
+  // 3. Price Category: Maps to lowercase price_range in DB
+  if (price) {
+    filter.price_range = price.trim().toLowerCase();
+  }
+
+  // 4. Rating: Maps to either rating (1-5) or faattsoo_rating (0-10) scaled correctly
+  if (rating) {
+    const numRating = parseFloat(rating);
+    if (!isNaN(numRating)) {
+      filter.$or = [
+        { rating: { $gte: numRating } },
+        { faattsoo_rating: { $gte: numRating * 2 } },
+      ];
+    }
+  }
+
+  // 5. Menu Item: Find matching restaurant_ids from MenuItem collection
   if (menuItem) {
-    const menuMatches = await MenuItem.distinct("restaurant", {
-      name: { $regex: menuItem, $options: "i" },
+    const menuMatches = await MenuItem.distinct("restaurant_id", {
+      name: { $regex: menuItem.trim(), $options: "i" },
     });
     filter._id = { $in: menuMatches };
+  }
+
+  let sortRule = "-rating";
+  if (sort === "rating") {
+    sortRule = "-rating -faattsoo_rating";
+  } else if (sort === "popular") {
+    sortRule = "-reviewCount -rating";
+  } else if (sort === "recommended") {
+    sortRule = "-isFeatured -rating";
   }
 
   const pagination = getPagination({ page, limit });
   const [items, total] = await Promise.all([
     Restaurant.find(filter)
-      .sort("-rating")
+      .sort(sortRule)
       .skip(pagination.skip)
       .limit(pagination.limit),
     Restaurant.countDocuments(filter),

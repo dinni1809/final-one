@@ -18,9 +18,10 @@ type Props = {
   restaurant: Restaurant;
   onPress: () => void;
   compact?: boolean;
+  style?: any;
 };
 
-export function RestaurantCard({ restaurant, onPress, compact }: Props) {
+export function RestaurantCard({ restaurant, onPress, compact, style }: Props) {
   const cuisines = useMemo(
     () => normalizeCuisineValues(restaurant.cuisines),
     [restaurant.cuisines],
@@ -57,7 +58,7 @@ export function RestaurantCard({ restaurant, onPress, compact }: Props) {
   };
 
   return (
-    <TouchableOpacity activeOpacity={0.78} onPress={onPress} style={[styles.card, compact && styles.compact]}>
+    <TouchableOpacity activeOpacity={0.78} onPress={onPress} style={[styles.card, compact && styles.compact, style]}>
       <View>
         <Image
           source={{ uri: imageUri }}

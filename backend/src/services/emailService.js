@@ -14,6 +14,7 @@ const smtpConfig = {
   secure: process.env.SMTP_SECURE || "not set",
   user: process.env.SMTP_USER || "not set",
   pass: maskString(process.env.SMTP_PASS),
+  tls: { rejectUnauthorized: false },
 };
 console.log("[EmailService] Initializing with SMTP config:", JSON.stringify(smtpConfig, null, 2));
 
@@ -28,6 +29,9 @@ if (process.env.SMTP_HOST && process.env.SMTP_USER) {
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
+    },
+    tls: {
+      rejectUnauthorized: false,
     },
   });
   

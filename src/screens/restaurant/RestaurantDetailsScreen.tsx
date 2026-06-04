@@ -6,8 +6,9 @@ import {
   useRoute,
 } from "@react-navigation/native";
 import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import * as Linking from "expo-linking";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   Alert,
   ScrollView,
@@ -59,6 +60,15 @@ export function RestaurantDetailsScreen() {
   };
   const submitReview = useSubmitReview(restaurantId);
   const isSubmittingReview = submitReview.status === "pending";
+  const scrollViewRef = useRef<ScrollView>(null);
+  const [menuY, setMenuY] = useState(0);
+
+  const handleCategorySelect = (selectedCat: MenuCategory) => {
+    setCategory(selectedCat);
+    if (menuY > 0) {
+      scrollViewRef.current?.scrollTo({ y: menuY - 10, animated: true });
+    }
+  };
 
   const handleSubmitReview = async () => {
     if (!reviewTitle.trim() || !reviewBody.trim()) {
@@ -93,8 +103,10 @@ export function RestaurantDetailsScreen() {
   return (
     <Screen>
       <ScrollView
+        ref={scrollViewRef}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
+        stickyHeaderIndices={[4]}
       >
         <View style={styles.topNav}>
           <LogoBadge size={66} />
@@ -122,7 +134,10 @@ export function RestaurantDetailsScreen() {
             style={StyleSheet.absoluteFill}
             contentFit="cover"
           />
-          <View style={styles.bannerShade} />
+          <LinearGradient
+            colors={["rgba(43,29,18,0)", "rgba(43,29,18,0.76)"]}
+            style={StyleSheet.absoluteFill}
+          />
           <View style={styles.bannerButtons}>
             <IconButton
               name="chevron-left"
@@ -157,18 +172,26 @@ export function RestaurantDetailsScreen() {
           </View>
         </View>
 
-        <View style={styles.infoGrid}>
-          <View style={styles.infoCol}>
-            <RatingSummaryCard summary={rating} />
+        <View style={styles.highlightRow}>
+          <View style={styles.highlightCard}>
+            <Feather name="star" size={17} color={colors.primary} />
+            <Text style={styles.highlightValue}>{restaurant.rating.toFixed(1)}</Text>
+            <Text style={styles.highlightLabel}>Rating</Text>
           </View>
-          <View style={styles.infoColWide}>
-            <VideoCard
-              image={restaurant.coverImage}
-              title={`Watch our experience at ${restaurant.name}`}
-              onPress={() =>
-                Alert.alert("FAATTSOO Video", "Video playback opens here.")
-              }
-            />
+          <View style={styles.highlightCard}>
+            <Feather name="dollar-sign" size={17} color={colors.primary} />
+            <Text style={styles.highlightValue}>{restaurant.priceCategory}</Text>
+            <Text style={styles.highlightLabel}>Price</Text>
+          </View>
+          <View style={styles.highlightCard}>
+            <Feather name="map-pin" size={17} color={colors.primary} />
+            <Text style={styles.highlightValue} numberOfLines={1}>{restaurant.area}</Text>
+            <Text style={styles.highlightLabel}>Area</Text>
+          </View>
+          <View style={styles.highlightCard}>
+            <Feather name="book-open" size={17} color={colors.primary} />
+            <Text style={styles.highlightValue}>{menu.length} Items</Text>
+            <Text style={styles.highlightLabel}>Menu</Text>
           </View>
         </View>
 
@@ -189,16 +212,27 @@ export function RestaurantDetailsScreen() {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.menuSection}>
+        <View
+          style={styles.stickyTabsContainer}
+          onLayout={(event) => setMenuY(event.nativeEvent.layout.y)}
+        >
           <View style={styles.menuHeader}>
             <Text style={styles.menuTitle}>Menu Highlights</Text>
             <View style={styles.menuLine} />
           </View>
-          <CategoryTabs selected={category} onSelect={setCategory} />
+          <CategoryTabs selected={category} onSelect={handleCategorySelect} />
+        </View>
+
+        <View style={styles.menuSectionContent}>
           {menu.length === 0 ? (
             <View style={styles.menuEmpty}>
-              <Feather name="book-open" size={28} color={colors.textSecondary} />
-              <Text style={styles.menuEmptyText}>Menu coming soon</Text>
+              <View style={styles.emptyIconContainer}>
+                <Feather name="book-open" size={32} color={colors.primary} />
+              </View>
+              <Text style={styles.menuEmptyTitle}>Menu Coming Soon</Text>
+              <Text style={styles.menuEmptySub}>
+                We are currently curating this menu to bring you the finest dining selection. Check back shortly!
+              </Text>
             </View>
           ) : (
             <View style={styles.menuGroups}>
@@ -269,7 +303,6 @@ export function RestaurantDetailsScreen() {
 const styles = StyleSheet.create({
   content: {
     paddingBottom: 32,
-    paddingHorizontal: 14,
     paddingTop: 10,
   },
   topNav: {
@@ -277,33 +310,31 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 8,
     marginBottom: 18,
+    marginHorizontal: 14,
   },
   banner: {
-    borderRadius: radius.lg,
-    height: 250,
+    height: 280,
     overflow: "hidden",
-    ...shadows.card,
-  },
-  bannerShade: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.28)",
+    width: "100%",
   },
   bannerButtons: {
     flexDirection: "row",
     justifyContent: "space-between",
     padding: 12,
+    paddingTop: 16,
   },
   bannerText: {
-    bottom: 18,
-    left: 18,
+    bottom: 20,
+    left: 16,
     position: "absolute",
-    right: 18,
+    right: 16,
   },
   restaurantName: {
     color: colors.white,
     fontFamily: "Georgia",
-    fontSize: 36,
-    lineHeight: 42,
+    fontSize: 32,
+    lineHeight: 38,
+    fontWeight: "700",
   },
   metaRow: {
     alignItems: "center",
@@ -316,6 +347,9 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: 13,
     fontWeight: "700",
+    textShadowColor: "rgba(0,0,0,0.4)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   pills: {
     flexDirection: "row",
@@ -329,36 +363,56 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     overflow: "hidden",
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 6,
   },
   open: { backgroundColor: colors.success },
   closed: { backgroundColor: colors.danger },
   timePill: {
-    backgroundColor: "rgba(255,255,255,0.18)",
+    backgroundColor: "rgba(255,255,255,0.22)",
     borderRadius: radius.pill,
     color: colors.white,
     fontSize: 12,
     fontWeight: "800",
     overflow: "hidden",
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 6,
   },
-  infoGrid: {
+  highlightRow: {
     flexDirection: "row",
-    gap: 12,
+    justifyContent: "space-between",
+    marginHorizontal: 14,
     marginTop: 18,
+    gap: 8,
   },
-  infoCol: {
-    flex: 0.9,
+  highlightCard: {
+    flex: 1,
+    backgroundColor: colors.beigeSoft,
+    borderRadius: radius.md,
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    ...shadows.soft,
   },
-  infoColWide: {
-    flex: 1.25,
+  highlightValue: {
+    color: colors.primaryDark,
+    fontSize: 14,
+    fontWeight: "800",
+    textAlign: "center",
+  },
+  highlightLabel: {
+    color: colors.textSecondary,
+    fontSize: 11,
+    fontWeight: "600",
+    textTransform: "uppercase",
   },
   aboutCard: {
     backgroundColor: colors.beigeSoft,
     borderRadius: radius.md,
     gap: 14,
     marginTop: 14,
+    marginHorizontal: 14,
     padding: 18,
     ...shadows.soft,
   },
@@ -389,12 +443,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "800",
   },
-  menuSection: {
-    backgroundColor: "rgba(255,255,255,0.42)",
-    borderRadius: radius.lg,
+  stickyTabsContainer: {
+    backgroundColor: colors.background,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    zIndex: 10,
     marginTop: 18,
-    padding: 14,
-    ...shadows.soft,
   },
   menuHeader: {
     alignItems: "center",
@@ -411,14 +465,34 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 1,
   },
+  menuSectionContent: {
+    marginHorizontal: 14,
+    marginTop: 8,
+  },
   menuGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
     marginTop: 14,
   },
+  menuGroups: {
+    gap: 20,
+  },
+  menuCategoryGroup: {
+    width: "100%",
+  },
+  menuCategoryTitle: {
+    color: colors.primaryDark,
+    fontFamily: "Georgia",
+    fontSize: 20,
+    fontWeight: "700",
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    paddingBottom: 6,
+  },
   reviewSection: {
-    marginTop: 18,
+    marginTop: 24,
+    marginHorizontal: 14,
   },
   reviewHeader: {
     alignItems: "center",
@@ -447,7 +521,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     flexDirection: "row",
     gap: 16,
-    marginTop: 18,
+    marginTop: 24,
+    marginHorizontal: 14,
     padding: 16,
     ...shadows.soft,
   },
@@ -464,30 +539,33 @@ const styles = StyleSheet.create({
   menuEmpty: {
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 36,
-    gap: 10,
+    paddingVertical: 44,
+    gap: 8,
     width: "100%",
+    backgroundColor: colors.beigeSoft,
+    borderRadius: radius.lg,
+    ...shadows.soft,
+    paddingHorizontal: 20,
   },
-  menuEmptyText: {
-    color: colors.textSecondary,
-    fontSize: 15,
-    fontWeight: "600",
+  emptyIconContainer: {
+    backgroundColor: colors.beige,
+    borderRadius: radius.pill,
+    padding: 16,
+    marginBottom: 4,
   },
-  menuGroups: {
-    gap: 20,
-    marginTop: 10,
-  },
-  menuCategoryGroup: {
-    width: "100%",
-  },
-  menuCategoryTitle: {
+  menuEmptyTitle: {
     color: colors.primaryDark,
     fontFamily: "Georgia",
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "700",
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    paddingBottom: 6,
-    marginTop: 10,
+    textAlign: "center",
+  },
+  menuEmptySub: {
+    color: colors.textSecondary,
+    fontSize: 14,
+    textAlign: "center",
+    maxWidth: 260,
+    lineHeight: 20,
+    marginTop: 4,
   },
 });

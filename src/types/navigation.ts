@@ -22,6 +22,7 @@ export type DiscoverStackParamList = {
 
 export type TrendingStackParamList = {
   TrendingMain: undefined;
+  TrendingCategory: { categoryId: string; categoryName: string };
   RestaurantDetails: { restaurantId: string };
 };
 

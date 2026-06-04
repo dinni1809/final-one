@@ -1,8 +1,26 @@
 const nodemailer = require("nodemailer");
 
+// Mask password helper
+const maskString = (str) => {
+  if (!str) return "not set";
+  if (str.length <= 4) return "****";
+  return str.slice(0, 2) + "****" + str.slice(-2);
+};
+
+// 6. Log exact SMTP configuration being used (mask password)
+const smtpConfig = {
+  host: process.env.SMTP_HOST || "not set (using mock)",
+  port: process.env.SMTP_PORT || "not set",
+  secure: process.env.SMTP_SECURE || "not set",
+  user: process.env.SMTP_USER || "not set",
+  pass: maskString(process.env.SMTP_PASS),
+};
+console.log("[EmailService] Initializing with SMTP config:", JSON.stringify(smtpConfig, null, 2));
+
 let transporter;
 
 if (process.env.SMTP_HOST && process.env.SMTP_USER) {
+  console.log("[EmailService] Creating standard nodemailer SMTP transporter...");
   transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: parseInt(process.env.SMTP_PORT || "587", 10),
@@ -12,9 +30,27 @@ if (process.env.SMTP_HOST && process.env.SMTP_USER) {
       pass: process.env.SMTP_PASS,
     },
   });
+  
+  // 3. Log transporter.verify() on startup
+  console.log("[EmailService] Performing transporter connection verify check on startup...");
+  transporter.verify((error, success) => {
+    if (error) {
+      console.error("[EmailService] Transporter startup verification check FAILED:", error.message);
+      if (error.stack) {
+        console.error("[EmailService] Transporter verify error stack trace:\n", error.stack);
+      }
+    } else {
+      console.log("[EmailService] Transporter startup check succeeded. Ready to deliver messages.");
+    }
+  });
 } else {
+  console.log("[EmailService] SMTP credentials not fully set. Initializing mock console transporter.");
   // Mock console transporter for development/testing
   transporter = {
+    verify: async () => {
+      console.log("[EmailService] Mock verify check called (always passes)");
+      return true;
+    },
     sendMail: async (options) => {
       console.log("\n---------------- FAATTSOO EMAIL SENT (MOCK) ----------------");
       console.log(`To:      ${options.to}`);
@@ -31,6 +67,9 @@ if (process.env.SMTP_HOST && process.env.SMTP_USER) {
 }
 
 exports.sendVerificationEmail = async (user, token) => {
+  // 1. Log before sendVerificationEmail()
+  console.log(`[EmailService] sendVerificationEmail() called. Recipient: ${user.email}, Token: ${token}`);
+  
   const verifyUrl = `${process.env.BACKEND_URL || "http://localhost:5000"}/api/auth/verify-email?token=${token}`;
 
   const html = `
@@ -126,10 +165,41 @@ exports.sendVerificationEmail = async (user, token) => {
     </html>
   `;
 
-  await transporter.sendMail({
-    from: `"FAATTSOO" <noreply@faattsoo.local>`,
-    to: user.email,
-    subject: "Verify your FAATTSOO Account",
-    html,
-  });
+  try {
+    // 3. Log transporter.verify() before sending
+    console.log("[EmailService] Verifying transporter connection before sending mail...");
+    if (typeof transporter.verify === "function") {
+      if (transporter.verify.constructor.name === "AsyncFunction") {
+        await transporter.verify();
+      } else {
+        await new Promise((resolve, reject) => {
+          transporter.verify((err, success) => {
+            if (err) reject(err);
+            else resolve(success);
+          });
+        });
+      }
+      console.log("[EmailService] Transporter connection verification verified successfully.");
+    }
+
+    console.log("[EmailService] Calling transporter.sendMail()...");
+    // 4. Log transporter.sendMail() result
+    const result = await transporter.sendMail({
+      from: `"FAATTSOO" <noreply@faattsoo.local>`,
+      to: user.email,
+      subject: "Verify your FAATTSOO Account",
+      html,
+    });
+    console.log("[EmailService] transporter.sendMail() succeeded. Result:", JSON.stringify(result, null, 2));
+
+    // 2. Log after sendVerificationEmail()
+    console.log(`[EmailService] sendVerificationEmail() completed successfully for: ${user.email}`);
+  } catch (error) {
+    // 5. Log caught exception stack trace
+    console.error("[EmailService] sendVerificationEmail() FAILED with error:", error.message);
+    if (error.stack) {
+      console.error("[EmailService] Stack trace:\n", error.stack);
+    }
+    throw error;
+  }
 };

@@ -13,6 +13,10 @@ exports.findByIdentifierWithPassword = (identifier) => {
   }).select("+password");
 };
 exports.findById = (id) => User.findById(id);
+exports.findByVerificationToken = (token) =>
+  User.findOne({ verificationToken: token }).select(
+    "+verificationToken +verificationExpires",
+  );
 exports.updateProfile = (id, data) =>
   User.findByIdAndUpdate(id, data, {
     new: true,
@@ -23,7 +27,7 @@ exports.count = () => User.countDocuments();
 exports.upsertGoogleUser = ({ name, email, googleId, avatar }) =>
   User.findOneAndUpdate(
     { email },
-    { name, email, googleId, avatar },
+    { name, email, googleId, avatar, isVerified: true },
     { new: true, upsert: true, setDefaultsOnInsert: true },
   );
 

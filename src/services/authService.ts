@@ -94,6 +94,10 @@ export const authService = {
     await apiClient.post("/auth/forgot-password", { email });
   },
 
+  async resendVerification(identifier: string) {
+    await apiClient.post("/auth/resend-verification", { identifier });
+  },
+
   async persistSession(auth: AuthResponse) {
     await secureStorage.setItemAsync(storageKeys.accessToken, auth.accessToken);
     if (auth.refreshToken) {

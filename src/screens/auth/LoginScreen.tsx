@@ -12,8 +12,10 @@ import { LogoBadge } from '@/components/common/LogoBadge';
 import { Screen } from '@/components/common/Screen';
 import { AuthTextInput } from '@/components/forms/AuthTextInput';
 import { useAuthStore } from '@/store/authStore';
+import { authService } from '@/services/authService';
 import { colors, radius, shadows, typography } from '@/theme';
 import type { AuthStackParamList } from '@/types/navigation';
+import { Feather } from '@expo/vector-icons';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
@@ -27,6 +29,8 @@ type FormValues = z.infer<typeof schema>;
 export function LoginScreen({ navigation }: Props) {
   const [secure, setSecure] = useState(true);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
+  
   const login = useAuthStore((state) => state.login);
   const googleLogin = useAuthStore((state) => state.googleLogin);
   const { control, handleSubmit, formState } = useForm<FormValues>({
@@ -36,11 +40,26 @@ export function LoginScreen({ navigation }: Props) {
 
   const onSubmit = handleSubmit(async (values) => {
     try {
+      setUnverifiedEmail(null);
       await login(values.identifier, values.password);
-    } catch (error) {
+    } catch (error: any) {
+      if (error.message === "Please verify your email before logging in.") {
+        setUnverifiedEmail(values.identifier);
+      }
       Alert.alert('Login failed', error instanceof Error ? error.message : 'Please try again');
     }
   });
+
+  const onResendVerification = async () => {
+    if (!unverifiedEmail) return;
+    try {
+      await authService.resendVerification(unverifiedEmail);
+      Alert.alert("Success", "Verification email has been resent. Please check your inbox.");
+      setUnverifiedEmail(null);
+    } catch (error: any) {
+      Alert.alert("Resend Failed", error.message || "Failed to resend verification email.");
+    }
+  };
 
   const onGoogle = async () => {
     setGoogleLoading(true);
@@ -87,6 +106,26 @@ export function LoginScreen({ navigation }: Props) {
             {formState.errors.identifier || formState.errors.password ? (
               <Text style={styles.error}>{formState.errors.identifier?.message ?? formState.errors.password?.message}</Text>
             ) : null}
+
+            {unverifiedEmail && (
+              <View style={styles.unverifiedContainer}>
+                <View style={styles.unverifiedHeader}>
+                  <Feather name="alert-circle" size={16} color={colors.danger} style={{ marginRight: 6 }} />
+                  <Text style={styles.unverifiedText}>
+                    Please verify your email before logging in.
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.resendBtn}
+                  activeOpacity={0.8}
+                  onPress={onResendVerification}
+                >
+                  <Text style={styles.resendBtnText}>Resend Verification Email</Text>
+                  <Feather name="send" size={12} color={colors.white} />
+                </TouchableOpacity>
+              </View>
+            )}
+
             <TouchableOpacity style={styles.forgot} onPress={() => navigation.navigate('ForgotPassword')}>
               <Text style={styles.forgotText}>Forgot Password?</Text>
             </TouchableOpacity>
@@ -243,5 +282,43 @@ const styles = StyleSheet.create({
     right: -30,
     transform: [{ rotate: '-8deg' }],
     width: 300,
+  },
+  unverifiedContainer: {
+    backgroundColor: '#FCE8E6',
+    borderColor: '#F5C2BE',
+    borderWidth: 1,
+    borderRadius: radius.md,
+    padding: 12,
+    gap: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+  },
+  unverifiedHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  unverifiedText: {
+    color: colors.danger,
+    fontSize: 13,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  resendBtn: {
+    backgroundColor: colors.primaryDark,
+    borderRadius: radius.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    ...shadows.soft,
+  },
+  resendBtnText: {
+    color: colors.white,
+    fontSize: 12,
+    fontWeight: '800',
   },
 });

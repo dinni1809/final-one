@@ -33,10 +33,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     await useFavoriteStore.getState().loadFavorites();
   },
   async register(name, email, password, username) {
-    const auth = await authService.register(name, email, password, username);
-    await authService.persistSession(auth);
-    set({ user: auth.user, isAuthenticated: true, isHydrating: false });
-    await useFavoriteStore.getState().loadFavorites();
+    await authService.register(name, email, password, username);
   },
   async googleLogin() {
     const auth = await authService.googleLogin("expo-google-token");

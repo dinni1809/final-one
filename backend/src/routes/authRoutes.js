@@ -21,4 +21,9 @@ router.put(
 );
 router.post("/logout", authController.logout);
 
+// Verification routes
+router.post("/send-verification", requireAuth, authController.sendVerification);
+router.get("/verify-email", authController.verifyEmail);
+router.post("/resend-verification", authController.resendVerification);
+
 module.exports = router;

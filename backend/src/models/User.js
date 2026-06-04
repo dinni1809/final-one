@@ -24,6 +24,9 @@ const userSchema = new mongoose.Schema(
     avatar: { type: String },
     role: { type: String, enum: Object.values(ROLES), default: ROLES.USER },
     favoriteRestaurants: [{ type: String, trim: true }],
+    isVerified: { type: Boolean, default: false },
+    verificationToken: { type: String, select: false },
+    verificationExpires: { type: Date, select: false },
   },
   { timestamps: true },
 );

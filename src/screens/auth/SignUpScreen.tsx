@@ -52,7 +52,11 @@ export function SignUpScreen({ navigation }: Props) {
 
       console.log("REGISTER SUCCESS", result);
 
-      Alert.alert("Success", "Account created successfully");
+      Alert.alert(
+        "Verification Email Sent",
+        "A verification email has been sent to your address. Please verify your email before logging in.",
+        [{ text: "OK", onPress: () => navigation.goBack() }]
+      );
     } catch (error) {
       console.error("REGISTER ERROR", error);
 

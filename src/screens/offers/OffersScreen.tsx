@@ -14,7 +14,9 @@ import {
 import { IconButton } from "@/components/common/IconButton";
 import { LogoBadge } from "@/components/common/LogoBadge";
 import { Screen } from "@/components/common/Screen";
+import { useRestaurants } from "@/hooks/useRestaurants";
 import { colors, radius, shadows, typography } from "@/theme";
+import type { Restaurant } from "@/types/restaurant";
 
 const DEALS = [
   {
@@ -24,7 +26,6 @@ const DEALS = [
     title: "50% OFF Main Course",
     ends: "Ends: 10 June",
     badge: "3 days left",
-    image: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=600&h=400&q=82",
   },
   {
     id: "deal-2",
@@ -33,7 +34,6 @@ const DEALS = [
     title: "Buy 1 Get 1 Mocktail",
     ends: "Ends: 12 June",
     badge: "5 days left",
-    image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&h=400&q=82",
   },
   {
     id: "deal-3",
@@ -42,42 +42,36 @@ const DEALS = [
     title: "20% OFF Desserts",
     ends: "Ends: 15 June",
     badge: "8 days left",
-    image: "https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=600&h=400&q=82",
   },
 ];
 
-const REWARDS = [
+const SPECIAL_OFFERS = [
   {
-    id: "reward-1",
-    title: "Birthday Week Reward",
-    emoji: "🎂",
-    badge: "BIRTHDAY SPECIAL",
-    validUntil: "Valid till: 31 Dec 2026",
-    description: "Enjoy a complimentary signature dessert and flat 15% discount on your entire table during your birthday week.",
+    id: "special-1",
+    restaurantId: "69eee48b96de99de33ec1c55",
+    restaurantName: "Glen's Bakehouse",
+    title: "Birthday Week Special",
+    reward: "Free Dessert",
+    ends: "Ends: 20 June",
+    badge: "3 days left",
   },
   {
-    id: "reward-2",
+    id: "special-2",
+    restaurantId: "69eee48b96de99de33ec1c52",
+    restaurantName: "Revival - Marriott",
+    title: "Corporate Lunch Offer",
+    reward: "Free Beverage",
+    ends: "Ends: 15 June",
+    badge: "5 days left",
+  },
+  {
+    id: "special-3",
+    restaurantId: "69eee48b96de99de33ec1c57",
+    restaurantName: "Corner House",
     title: "Student Special",
-    emoji: "🎓",
-    badge: "STUDENT DEAL",
-    validUntil: "Valid till: 30 Sept 2026",
-    description: "Flash your valid student ID card to receive a free mocktail or beverage with any main course purchase.",
-  },
-  {
-    id: "reward-3",
-    title: "Corporate Lunch Deal",
-    emoji: "💼",
-    badge: "CORP LUNCH",
-    validUntil: "Valid till: 31 Dec 2026",
-    description: "Flat 15% discount on all corporate lunchtime orders above ₹1,500 between 12:00 PM and 3:30 PM.",
-  },
-  {
-    id: "reward-4",
-    title: "Name Lucky Offer",
-    emoji: "🎉",
-    badge: "LUCKY DRAW",
-    validUntil: "Weekly Draw",
-    description: "Is your name starts with 'D' or 'S'? Congratulations! Get a free chef's special mocktail with every order today.",
+    reward: "10% OFF",
+    ends: "Ends: 30 June",
+    badge: "10 days left",
   },
 ];
 
@@ -93,6 +87,8 @@ export function OffersScreen() {
   const navigation = useNavigation<any>();
   const [mysteryState, setMysteryState] = useState<"idle" | "shuffling" | "revealed" | "claimed">("idle");
   const [revealedReward, setRevealedReward] = useState("");
+
+  const { data: restaurants = [] } = useRestaurants();
 
   const handleReveal = () => {
     if (mysteryState === "shuffling") return;
@@ -116,6 +112,12 @@ export function OffersScreen() {
     setRevealedReward("");
   };
 
+  // Helper to fetch the actual resolved image from the database
+  const getRestaurantImage = (restaurantId: string) => {
+    const matched = (restaurants as Restaurant[]).find((r) => r.id === restaurantId);
+    return matched?.image || "https://images.unsplash.com/photo-1504674900247-0877df9cc836"; // Fallback URL
+  };
+
   return (
     <Screen>
       <View style={styles.header}>
@@ -128,12 +130,6 @@ export function OffersScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <View style={styles.heroSection}>
-          <Text style={styles.heroEmoji}>🔥</Text>
-          <Text style={styles.heroTitle}>Offers & Rewards</Text>
-          <Text style={styles.heroSubtitle}>Discover exclusive deals and loyalty rewards.</Text>
-        </View>
-
         {/* Section 1: Restaurant Deals */}
         <View style={styles.sectionContainer}>
           <View style={styles.sectionHeader}>
@@ -153,7 +149,11 @@ export function OffersScreen() {
                 }
               >
                 <View style={styles.imageContainer}>
-                  <Image source={{ uri: deal.image }} style={styles.dealImage} contentFit="cover" />
+                  <Image
+                    source={{ uri: getRestaurantImage(deal.restaurantId) }}
+                    style={styles.dealImage}
+                    contentFit="cover"
+                  />
                   <View style={styles.daysBadge}>
                     <Text style={styles.daysBadgeText}>{deal.badge}</Text>
                   </View>
@@ -168,27 +168,45 @@ export function OffersScreen() {
           </ScrollView>
         </View>
 
-        {/* Section 2: FAATTSOO Rewards */}
+        {/* Section 2: Special Restaurant Offers */}
         <View style={styles.sectionContainer}>
           <View style={styles.sectionHeader}>
             <Feather name="award" size={18} color={colors.primary} />
-            <Text style={styles.sectionTitle}>FAATTSOO Rewards</Text>
+            <Text style={styles.sectionTitle}>Special Restaurant Offers</Text>
           </View>
-          <View style={styles.rewardsList}>
-            {REWARDS.map((reward) => (
-              <View key={reward.id} style={styles.rewardCard}>
-                <View style={styles.rewardHeader}>
-                  <Text style={styles.rewardEmoji}>{reward.emoji}</Text>
-                  <View style={styles.rewardTitleContainer}>
-                    <Text style={styles.rewardCardTitle}>{reward.title}</Text>
-                    <Text style={styles.rewardValid}>{reward.validUntil}</Text>
-                  </View>
-                  <View style={styles.rewardBadge}>
-                    <Text style={styles.rewardBadgeText}>{reward.badge}</Text>
-                  </View>
+          <View style={styles.specialOffersList}>
+            {SPECIAL_OFFERS.map((offer) => (
+              <TouchableOpacity
+                key={offer.id}
+                activeOpacity={0.8}
+                style={styles.specialOfferCard}
+                onPress={() =>
+                  navigation.navigate("RestaurantDetails" as never, {
+                    restaurantId: offer.restaurantId,
+                  } as never)
+                }
+              >
+                <Image
+                  source={{ uri: getRestaurantImage(offer.restaurantId) }}
+                  style={styles.specialOfferImage}
+                  contentFit="cover"
+                />
+                <View style={styles.specialOfferContent}>
+                  <Text style={styles.specialOfferRestaurant} numberOfLines={1}>
+                    {offer.restaurantName}
+                  </Text>
+                  <Text style={styles.specialOfferTitle} numberOfLines={1}>
+                    {offer.title}
+                  </Text>
+                  <Text style={styles.specialOfferReward}>
+                    🎁 {offer.reward}
+                  </Text>
+                  <Text style={styles.specialOfferEnds}>{offer.ends}</Text>
                 </View>
-                <Text style={styles.rewardDescription}>{reward.description}</Text>
-              </View>
+                <View style={styles.specialUrgencyBadge}>
+                  <Text style={styles.specialUrgencyText}>{offer.badge}</Text>
+                </View>
+              </TouchableOpacity>
             ))}
           </View>
         </View>
@@ -278,32 +296,8 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 48,
   },
-  heroSection: {
-    alignItems: "center",
-    paddingVertical: 24,
-    paddingHorizontal: 20,
-    backgroundColor: colors.beigeSoft,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  heroEmoji: {
-    fontSize: 40,
-    marginBottom: 8,
-  },
-  heroTitle: {
-    color: colors.primaryDark,
-    fontFamily: "Georgia",
-    fontSize: 28,
-    fontWeight: "700",
-  },
-  heroSubtitle: {
-    color: colors.textSecondary,
-    fontSize: 14,
-    textAlign: "center",
-    marginTop: 4,
-  },
   sectionContainer: {
-    marginTop: 24,
+    marginTop: 20,
   },
   sectionHeader: {
     flexDirection: "row",
@@ -342,7 +336,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 8,
     right: 8,
-    backgroundColor: colors.primaryDark,
+    backgroundColor: colors.danger, // Crimson urgency color!
     borderRadius: radius.pill,
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -372,54 +366,69 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 2,
   },
-  rewardsList: {
+  specialOffersList: {
     marginHorizontal: 16,
     gap: 12,
   },
-  rewardCard: {
+  specialOfferCard: {
     backgroundColor: colors.beigeSoft,
     borderRadius: radius.md,
-    padding: 14,
+    flexDirection: "row",
+    overflow: "hidden",
     borderWidth: 1,
     borderColor: colors.border,
     ...shadows.soft,
+    position: "relative",
   },
-  rewardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    marginBottom: 8,
+  specialOfferImage: {
+    width: 100,
+    height: "100%",
+    minHeight: 110,
   },
-  rewardEmoji: {
-    fontSize: 26,
-  },
-  rewardTitleContainer: {
+  specialOfferContent: {
     flex: 1,
+    padding: 12,
+    gap: 4,
+    justifyContent: "center",
   },
-  rewardCardTitle: {
-    color: colors.primaryDark,
-    fontSize: 15,
-    fontWeight: "800",
-  },
-  rewardValid: {
+  specialOfferRestaurant: {
     color: colors.textSecondary,
     fontSize: 11,
+    fontWeight: "800",
+    textTransform: "uppercase",
   },
-  rewardBadge: {
-    backgroundColor: colors.primary,
-    borderRadius: 4,
+  specialOfferTitle: {
+    color: colors.primaryDark,
+    fontFamily: "Georgia",
+    fontSize: 15,
+    fontWeight: "700",
+    paddingRight: 60, // Space for urgency badge
+  },
+  specialOfferReward: {
+    color: colors.primary,
+    fontSize: 13,
+    fontWeight: "700",
+    marginTop: 2,
+  },
+  specialOfferEnds: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    marginTop: 2,
+  },
+  specialUrgencyBadge: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    backgroundColor: colors.danger, // Crimson urgency color!
+    borderRadius: radius.pill,
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
-  rewardBadgeText: {
+  specialUrgencyText: {
     color: colors.white,
     fontSize: 9,
     fontWeight: "800",
-  },
-  rewardDescription: {
-    color: colors.text,
-    fontSize: 13,
-    lineHeight: 18,
+    textTransform: "uppercase",
   },
   mysteryCard: {
     marginHorizontal: 16,

@@ -1,6 +1,6 @@
 import { NavigationContainer } from "@react-navigation/native";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 import { SplashScreen } from "@/screens/SplashScreen";
 import { LogoBadge } from "@/components/common/LogoBadge";
@@ -15,8 +15,12 @@ export function RootNavigator() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const [splashFinished, setSplashFinished] = useState(false);
 
+  const handleSplashFinish = useCallback(() => {
+    setSplashFinished(true);
+  }, []);
+
   if (!splashFinished || isHydrating) {
-    return <SplashScreen onFinish={() => setSplashFinished(true)} />;
+    return <SplashScreen onFinish={handleSplashFinish} />;
   }
 
   return (

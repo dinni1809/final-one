@@ -1,5 +1,15 @@
 import type { Restaurant, RestaurantFilters } from "@/types/restaurant";
-import { getImageUri } from "@/utils/format";
+import {
+  normalizeAreaValue,
+  normalizeCuisineValues,
+  restaurantMatchesArea,
+  restaurantMatchesCuisine,
+  splitCommaSeparatedValues,
+} from "@/utils/filterOptions";
+import {
+  logApiImageUrl,
+  resolveRestaurantImageUrl,
+} from "@/utils/restaurantImageAudit";
 
 import { apiClient } from "./api/client";
 
@@ -13,8 +23,11 @@ type ApiRestaurant = Partial<
   _id?: string;
   id?: string;
   slug?: string;
-  cuisine?: string[];
-  cuisines?: string[];
+  cuisine?: string | string[];
+  cuisines?: string | string[];
+  image_url?: string | null;
+  banner_image_url?: string | null;
+  bannerImageUrl?: string | null;
   isFeatured?: boolean;
   featured?: boolean;
 };
@@ -45,14 +58,25 @@ const normalizeRestaurant = (item: ApiRestaurant): Restaurant => {
     item.slug ??
     item.name?.toLowerCase().replace(/\s+/g, "-") ??
     "restaurant";
-  const cuisines = item.cuisines ?? item.cuisine ?? [];
-  const image = item.image || getImageUri("photo-1517248135467-4c7edcad34c4");
+  const cuisines = normalizeCuisineValues(item.cuisines ?? item.cuisine);
+  const image = resolveRestaurantImageUrl(item);
+  const name = item.name ?? "Restaurant";
+
+  logApiImageUrl({
+    restaurantId: String(id),
+    restaurantName: name,
+    banner_image_url: item.banner_image_url,
+    bannerImageUrl: item.bannerImageUrl,
+    image_url: item.image_url,
+    image: item.image,
+    resolvedUrl: image,
+  });
 
   return {
     id,
-    name: item.name ?? "Restaurant",
+    name,
     cuisines,
-    area: item.area ?? "Bangalore",
+    area: normalizeAreaValue(item.area),
     city: item.city ?? "Bangalore",
     rating: item.rating ?? 0,
     reviewCount: item.reviewCount ?? 0,
@@ -81,14 +105,31 @@ const cleanFilters = (filters?: RestaurantFilters) =>
     Object.entries(filters ?? {}).filter(([, value]) => Boolean(value)),
   );
 
+const applyClientSideFilters = (
+  restaurants: Restaurant[],
+  filters?: RestaurantFilters,
+) => {
+  const { area, cuisine } = filters ?? {};
+  if (!area && !cuisine) return restaurants;
+
+  return restaurants.filter(
+    (r) =>
+      restaurantMatchesArea(r.area, area) &&
+      restaurantMatchesCuisine(r.cuisines, cuisine),
+  );
+};
+
 export const restaurantService = {
   async getRestaurants(filters?: RestaurantFilters) {
+    // Area/cuisine are matched client-side so comma-separated DB values still filter correctly.
+    const { area, cuisine, ...apiFilters } = filters ?? {};
     const { data } = await apiClient.get<
       ApiEnvelope<ApiList<ApiRestaurant>> | ApiList<ApiRestaurant>
     >("/restaurants/filter", {
-      params: cleanFilters(filters),
+      params: cleanFilters(apiFilters),
     });
-    return unwrapList(data).map(normalizeRestaurant);
+    const normalized = unwrapList(data).map(normalizeRestaurant);
+    return applyClientSideFilters(normalized, { area, cuisine });
   },
   async getRestaurantById(id: string) {
     const { data } = await apiClient.get<
@@ -129,10 +170,10 @@ export const restaurantService = {
       ]);
 
     return {
-      areas: unwrap(areasResponse.data),
-      cuisines: unwrap(cuisinesResponse.data),
-      styles: unwrap(stylesResponse.data),
-      prices: unwrap(pricesResponse.data),
+      areas: splitCommaSeparatedValues(unwrap(areasResponse.data)),
+      cuisines: splitCommaSeparatedValues(unwrap(cuisinesResponse.data)),
+      styles: splitCommaSeparatedValues(unwrap(stylesResponse.data)),
+      prices: splitCommaSeparatedValues(unwrap(pricesResponse.data)),
     } as ApiFilterOptions;
   },
 };

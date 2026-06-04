@@ -20,7 +20,7 @@ exports.findBySlugs = (values) => {
 
   const objectIds = values
     .filter((value) => mongoose.Types.ObjectId.isValid(value.toString()))
-    .map((value) => mongoose.Types.ObjectId(value.toString()));
+    .map((value) => new mongoose.Types.ObjectId(value.toString()));
 
   return Restaurant.find({
     $or: [

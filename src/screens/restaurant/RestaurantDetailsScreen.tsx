@@ -195,11 +195,29 @@ export function RestaurantDetailsScreen() {
             <View style={styles.menuLine} />
           </View>
           <CategoryTabs selected={category} onSelect={setCategory} />
-          <View style={styles.menuGrid}>
-            {menu.map((item: MenuItem) => (
-              <MenuCard key={item.id} item={item} />
-            ))}
-          </View>
+          {menu.length === 0 ? (
+            <View style={styles.menuEmpty}>
+              <Feather name="book-open" size={28} color={colors.textSecondary} />
+              <Text style={styles.menuEmptyText}>Menu coming soon</Text>
+            </View>
+          ) : (
+            <View style={styles.menuGroups}>
+              {(["Starters", "Mains", "Desserts", "Beverages"] as const).map((catName) => {
+                const items = menu.filter((item: MenuItem) => item.category === catName);
+                if (items.length === 0) return null;
+                return (
+                  <View key={catName} style={styles.menuCategoryGroup}>
+                    <Text style={styles.menuCategoryTitle}>{catName}</Text>
+                    <View style={styles.menuGrid}>
+                      {items.map((item: MenuItem) => (
+                        <MenuCard key={item.id} item={item} />
+                      ))}
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+          )}
         </View>
 
         <View style={styles.reviewSection}>
@@ -442,5 +460,34 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     fontSize: 13,
     marginTop: 3,
+  },
+  menuEmpty: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 36,
+    gap: 10,
+    width: "100%",
+  },
+  menuEmptyText: {
+    color: colors.textSecondary,
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  menuGroups: {
+    gap: 20,
+    marginTop: 10,
+  },
+  menuCategoryGroup: {
+    width: "100%",
+  },
+  menuCategoryTitle: {
+    color: colors.primaryDark,
+    fontFamily: "Georgia",
+    fontSize: 20,
+    fontWeight: "700",
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    paddingBottom: 6,
+    marginTop: 10,
   },
 });

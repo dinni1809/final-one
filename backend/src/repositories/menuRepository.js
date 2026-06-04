@@ -4,21 +4,21 @@ const Restaurant = require("../models/Restaurant");
 
 exports.create = (data) => MenuItem.create(data);
 exports.findByRestaurant = async (restaurantId) => {
-  const query = { isAvailable: true };
+  const query = {};
   if (mongoose.Types.ObjectId.isValid(restaurantId)) {
-    query.restaurant = restaurantId;
+    query.restaurant_id = restaurantId;
   } else {
     const restaurant = await Restaurant.findOne({
       slug: restaurantId.toLowerCase(),
     });
     if (!restaurant) return [];
-    query.restaurant = restaurant._id;
+    query.restaurant_id = restaurant._id;
   }
   return MenuItem.find(query);
 };
 exports.search = (q = "") =>
   MenuItem.find({ name: { $regex: q, $options: "i" } }).populate(
-    "restaurant",
+    "restaurant_id",
     "name area rating image",
   );
 exports.update = (id, data) =>

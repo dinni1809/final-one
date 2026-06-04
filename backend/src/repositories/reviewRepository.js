@@ -6,7 +6,7 @@ exports.findByRestaurant = (restaurantId) =>
   Review.find({ restaurant: restaurantId }).sort({ createdAt: -1 });
 
 exports.getSummary = async (restaurantId) => {
-  const match = { restaurant: mongoose.Types.ObjectId(restaurantId) };
+  const match = { restaurant: new mongoose.Types.ObjectId(restaurantId) };
   const overall = await Review.aggregate([
     { $match: match },
     {

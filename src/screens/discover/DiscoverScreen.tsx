@@ -1,8 +1,8 @@
 import { DrawerActions, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
-import { useMemo, useState } from "react";
-import { FlatList, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useEffect, useMemo, useState } from "react";
+import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { RestaurantCard } from "@/components/cards/RestaurantCard";
 import { DecorativeDivider } from "@/components/common/DecorativeDivider";
@@ -17,6 +17,11 @@ import { useFilterStore } from "@/store/filterStore";
 import { colors, radius, shadows, typography } from "@/theme";
 import type { DiscoverStackParamList } from "@/types/navigation";
 import type { Restaurant } from "@/types/restaurant";
+import {
+  splitAndNormalizeValues,
+  splitCommaSeparatedValues,
+} from "@/utils/filterOptions";
+import { printDiscoverAuditReport } from "@/utils/discoverAudit";
 
 type Nav = NativeStackNavigationProp<DiscoverStackParamList>;
 
@@ -43,150 +48,161 @@ export function DiscoverScreen() {
 
   const dropdownOptions = useMemo(
     () => ({
-      area: filterOptions.areas,
-      price: filterOptions.prices,
-      menuItem: menuOptions,
-      cuisine: filterOptions.cuisines,
-      style: filterOptions.styles,
+      area: splitAndNormalizeValues(filterOptions.areas, "area"),
+      price: splitCommaSeparatedValues(filterOptions.prices),
+      menuItem: splitAndNormalizeValues(menuOptions, "menuItem"),
+      cuisine: splitAndNormalizeValues(filterOptions.cuisines, "cuisine"),
+      style: splitAndNormalizeValues(filterOptions.styles, "style"),
     }),
     [filterOptions, menuOptions],
   );
 
+  useEffect(() => {
+    if (restaurants.length === 0) return;
+    printDiscoverAuditReport(restaurants);
+  }, [restaurants]);
+
   return (
     <Screen>
-      <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
+      <Pressable
+        style={{ flex: 1 }}
+        onPress={() => setOpenFilter(null)}
       >
-        <View style={styles.header}>
-          <LogoBadge size={82} />
-          <View style={styles.headerIcons}>
-            <IconButton
-              name="heart"
-              size={27}
-              onPress={() => rootNavigation.navigate("Bookmarks" as never)}
+        <ScrollView
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.header}>
+            <LogoBadge size={82} />
+            <View style={styles.headerIcons}>
+              <IconButton
+                name="heart"
+                size={27}
+                onPress={() => rootNavigation.navigate("Bookmarks" as never)}
+              />
+              <IconButton
+                name="user"
+                size={27}
+                onPress={() => rootNavigation.navigate("Profile" as never)}
+              />
+              <IconButton
+                name="menu"
+                size={29}
+                onPress={() =>
+                  rootNavigation.dispatch(DrawerActions.openDrawer())
+                }
+              />
+            </View>
+          </View>
+
+          <View style={styles.heroSketch} />
+          <Text style={styles.title}>Discover Restaurants</Text>
+          <DecorativeDivider />
+          <Text style={styles.subtitle}>Curated places. Great experiences.</Text>
+
+          <View style={[styles.filterPanel, openFilter ? { zIndex: 9998, elevation: 20 } : null]}>
+            <FilterDropdown
+              label="Area"
+              value={filters.area}
+              placeholder="Select area"
+              options={dropdownOptions.area}
+              open={openFilter === "area"}
+              onOpen={() => setOpenFilter(openFilter === "area" ? null : "area")}
+              onClose={() => setOpenFilter(null)}
+              onSelect={(value) => {
+                setFilter("area", value as never);
+                setOpenFilter(null);
+              }}
             />
-            <IconButton
-              name="user"
-              size={27}
-              onPress={() => rootNavigation.navigate("Profile" as never)}
+            <FilterDropdown
+              label="Price"
+              value={filters.price}
+              placeholder="Select price"
+              options={dropdownOptions.price}
+              open={openFilter === "price"}
+              onOpen={() => setOpenFilter(openFilter === "price" ? null : "price")}
+              onClose={() => setOpenFilter(null)}
+              onSelect={(value) => {
+                setFilter("price", value as never);
+                setOpenFilter(null);
+              }}
             />
-            <IconButton
-              name="menu"
-              size={29}
-              onPress={() =>
-                rootNavigation.dispatch(DrawerActions.openDrawer())
-              }
+            <FilterDropdown
+              label="Menu item"
+              value={filters.menuItem}
+              placeholder="Select item"
+              options={dropdownOptions.menuItem}
+              open={openFilter === "menuItem"}
+              onOpen={() => setOpenFilter(openFilter === "menuItem" ? null : "menuItem")}
+              onClose={() => setOpenFilter(null)}
+              onSelect={(value) => {
+                setFilter("menuItem", value as never);
+                setOpenFilter(null);
+              }}
+            />
+            <FilterDropdown
+              label="Cuisine"
+              value={filters.cuisine}
+              placeholder="Select cuisine"
+              options={dropdownOptions.cuisine}
+              open={openFilter === "cuisine"}
+              onOpen={() => setOpenFilter(openFilter === "cuisine" ? null : "cuisine")}
+              onClose={() => setOpenFilter(null)}
+              onSelect={(value) => {
+                setFilter("cuisine", value as never);
+                setOpenFilter(null);
+              }}
+            />
+            <FilterDropdown
+              label="Type"
+              value={filters.style}
+              placeholder="Select type"
+              options={dropdownOptions.style}
+              open={openFilter === "style"}
+              onOpen={() => setOpenFilter(openFilter === "style" ? null : "style")}
+              onClose={() => setOpenFilter(null)}
+              onSelect={(value) => {
+                setFilter("style", value as never);
+                setOpenFilter(null);
+              }}
             />
           </View>
-        </View>
 
-        <View style={styles.heroSketch} />
-        <Text style={styles.title}>Discover Restaurants</Text>
-        <DecorativeDivider />
-        <Text style={styles.subtitle}>Curated places. Great experiences.</Text>
-
-        <View style={styles.filterPanel}>
-          <FilterDropdown
-            label="Area"
-            value={filters.area}
-            placeholder="Select area"
-            options={dropdownOptions.area}
-            open={openFilter === "area"}
-            onOpen={() => setOpenFilter("area")}
-            onClose={() => setOpenFilter(null)}
-            onSelect={(value) => {
-              setFilter("area", value as never);
-              setOpenFilter(null);
-            }}
-          />
-          <FilterDropdown
-            label="Price"
-            value={filters.price}
-            placeholder="Select price"
-            options={dropdownOptions.price}
-            open={openFilter === "price"}
-            onOpen={() => setOpenFilter("price")}
-            onClose={() => setOpenFilter(null)}
-            onSelect={(value) => {
-              setFilter("price", value as never);
-              setOpenFilter(null);
-            }}
-          />
-          <FilterDropdown
-            label="Menu item"
-            value={filters.menuItem}
-            placeholder="Select item"
-            options={dropdownOptions.menuItem}
-            open={openFilter === "menuItem"}
-            onOpen={() => setOpenFilter("menuItem")}
-            onClose={() => setOpenFilter(null)}
-            onSelect={(value) => {
-              setFilter("menuItem", value as never);
-              setOpenFilter(null);
-            }}
-          />
-          <FilterDropdown
-            label="Cuisine"
-            value={filters.cuisine}
-            placeholder="Select cuisine"
-            options={dropdownOptions.cuisine}
-            open={openFilter === "cuisine"}
-            onOpen={() => setOpenFilter("cuisine")}
-            onClose={() => setOpenFilter(null)}
-            onSelect={(value) => {
-              setFilter("cuisine", value as never);
-              setOpenFilter(null);
-            }}
-          />
-          <FilterDropdown
-            label="Type"
-            value={filters.style}
-            placeholder="Select type"
-            options={dropdownOptions.style}
-            open={openFilter === "style"}
-            onOpen={() => setOpenFilter("style")}
-            onClose={() => setOpenFilter(null)}
-            onSelect={(value) => {
-              setFilter("style", value as never);
-              setOpenFilter(null);
-            }}
-          />
-        </View>
-
-        <View style={styles.tables}>
-          <SectionHeader
-            title="Top Tables This Week"
-            onViewAll={() => navigation.navigate("RestaurantList")}
-          />
-          <Text style={styles.sectionCopy}>
-            Handpicked restaurants for memorable dining experiences.
-          </Text>
-          {restaurants.length === 0 ? (
-            <Text style={styles.empty}>
-              No restaurants found. Try changing a dropdown.
-            </Text>
-          ) : (
-            <FlatList
-              data={restaurants.slice(0, 8)}
-              horizontal
-              keyExtractor={(item) => item.id}
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.list}
-              renderItem={({ item }) => (
-                <RestaurantCard
-                  restaurant={item}
-                  onPress={() =>
-                    navigation.navigate("RestaurantDetails", {
-                      restaurantId: item.id,
-                    })
-                  }
-                />
-              )}
+          <View style={styles.tables}>
+            <SectionHeader
+              title="Top Tables This Week"
+              onViewAll={() => navigation.navigate("RestaurantList")}
             />
-          )}
-        </View>
-      </ScrollView>
+            <Text style={styles.sectionCopy}>
+              Handpicked restaurants for memorable dining experiences.
+            </Text>
+            {restaurants.length === 0 ? (
+              <Text style={styles.empty}>
+                No restaurants found. Try changing a dropdown.
+              </Text>
+            ) : (
+              <FlatList
+                data={restaurants.slice(0, 8)}
+                horizontal
+                keyExtractor={(item) => item.id}
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.list}
+                renderItem={({ item }) => (
+                  <RestaurantCard
+                    restaurant={item}
+                    onPress={() =>
+                      navigation.navigate("RestaurantDetails", {
+                        restaurantId: item.id,
+                      })
+                    }
+                  />
+                )}
+              />
+            )}
+          </View>
+        </ScrollView>
+      </Pressable>
       <LinearGradient
         colors={["rgba(255,255,255,0)", "#8B4E12"]}
         style={styles.bottomWave}
@@ -232,10 +248,8 @@ const styles = StyleSheet.create({
     marginTop: 22,
   },
   filterPanel: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    marginTop: 34,
+    flexDirection: "column",
+    marginTop: 30,
   },
   tables: {
     backgroundColor: "rgba(255,255,255,0.44)",

@@ -10,8 +10,8 @@ const reviewSchema = new mongoose.Schema(
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     userName: { type: String, required: true, trim: true },
     rating: { type: Number, required: true, min: 1, max: 5 },
-    title: { type: String, required: true, trim: true },
-    body: { type: String, trim: true },
+    title: { type: String, trim: true },
+    review: { type: String, required: true, trim: true },
   },
   { timestamps: true },
 );

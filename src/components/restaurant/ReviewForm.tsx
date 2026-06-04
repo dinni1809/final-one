@@ -70,8 +70,17 @@ export function ReviewForm({
         placeholderTextColor={colors.textSecondary}
         style={[styles.input, styles.textarea]}
         multiline
+        maxLength={600}
         textAlignVertical="top"
       />
+      <View style={styles.charCountRow}>
+        <Text style={[
+          styles.charCountText,
+          (body.trim().length < 10 || body.trim().length > 500) ? styles.charCountWarning : styles.charCountSuccess
+        ]}>
+          {body.trim().length} / 500 characters (min 10)
+        </Text>
+      </View>
       <PrimaryButton
         title="Submit Review"
         onPress={onSubmit}
@@ -122,5 +131,20 @@ const styles = StyleSheet.create({
   },
   textarea: {
     minHeight: 110,
+  },
+  charCountRow: {
+    alignSelf: "flex-end",
+    marginTop: -4,
+    marginBottom: 4,
+  },
+  charCountText: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  charCountWarning: {
+    color: colors.danger,
+  },
+  charCountSuccess: {
+    color: colors.success,
   },
 });

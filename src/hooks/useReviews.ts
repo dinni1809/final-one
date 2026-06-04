@@ -4,10 +4,10 @@ import { queryKeys } from "@/constants/queryKeys";
 import { reviewService } from "@/services/reviewService";
 import type { Review, ReviewPayload } from "@/types/restaurant";
 
-export const useReviews = (restaurantId: string) =>
+export const useReviews = (restaurantId: string, sort?: string) =>
   useQuery<Review[]>({
-    queryKey: queryKeys.reviews(restaurantId),
-    queryFn: () => reviewService.getReviews(restaurantId),
+    queryKey: [...queryKeys.reviews(restaurantId), sort],
+    queryFn: () => reviewService.getReviews(restaurantId, sort),
   });
 
 export const useSubmitReview = (restaurantId: string) => {
@@ -22,6 +22,9 @@ export const useSubmitReview = (restaurantId: string) => {
       });
       queryClient.invalidateQueries({
         queryKey: ["rating-summary", restaurantId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.restaurantDetails(restaurantId),
       });
     },
   });

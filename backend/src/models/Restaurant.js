@@ -18,6 +18,7 @@ const restaurantSchema = new mongoose.Schema(
     cuisine: [{ type: String, enum: CUISINES, index: true }],
     priceCategory: { type: String, enum: PRICE_CATEGORIES, required: true },
     rating: { type: Number, min: 0, max: 10, default: 0, index: true },
+    reviewCount: { type: Number, default: 0, index: true },
     style: { type: String, enum: RESTAURANT_STYLES, required: true },
     description: { type: String, trim: true },
     image: { type: String },

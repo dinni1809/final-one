@@ -31,6 +31,8 @@ exports.findBySlugs = (values) => {
 };
 exports.update = (id, data) =>
   Restaurant.findByIdAndUpdate(id, data, { new: true, runValidators: true });
+exports.updateRatingAndReviewCount = (id, rating, reviewCount) =>
+  Restaurant.findByIdAndUpdate(id, { rating, reviewCount }, { new: true, runValidators: true });
 exports.remove = (id) => Restaurant.findByIdAndDelete(id);
 exports.count = () => Restaurant.countDocuments();
 exports.distinctAreas = () => Restaurant.distinct("area");

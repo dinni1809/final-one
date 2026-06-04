@@ -13,6 +13,7 @@ router.post("/register", validate(registerValidator), authController.register);
 router.post("/login", validate(loginValidator), authController.login);
 router.post("/google", validate(googleValidator), authController.googleLogin);
 router.get("/me", requireAuth, authController.me);
+router.get("/me/reviews/count", requireAuth, authController.reviewsCount);
 router.put(
   "/me",
   requireAuth,

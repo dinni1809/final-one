@@ -27,6 +27,16 @@ exports.googleLogin = async (req, res, next) => {
 
 exports.me = (req, res) => response.ok(res, { user: req.user });
 
+exports.reviewsCount = async (req, res, next) => {
+  try {
+    const reviewService = require("../services/reviewService");
+    const count = await reviewService.getUserReviewsCount(req.user._id);
+    response.ok(res, { count });
+  } catch (error) {
+    next(error);
+  }
+};
+
 exports.updateProfile = async (req, res, next) => {
   try {
     response.ok(res, await authService.updateProfile(req.user._id, req.body));

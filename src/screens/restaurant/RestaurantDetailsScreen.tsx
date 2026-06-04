@@ -33,6 +33,7 @@ import { useMenu } from "@/hooks/useMenu";
 import { useRatingSummary } from "@/hooks/useRating";
 import { useRestaurantDetails } from "@/hooks/useRestaurants";
 import { useReviews, useSubmitReview } from "@/hooks/useReviews";
+import { useAuthStore } from "@/store/authStore";
 import { colors, radius, shadows, typography } from "@/theme";
 import type { MenuCategory, MenuItem, Review } from "@/types/restaurant";
 
@@ -46,6 +47,7 @@ export function RestaurantDetailsScreen() {
   const route = useRoute<DetailsRoute>();
   const restaurantId = route.params?.restaurantId ?? "olive-bistro";
   const [category, setCategory] = useState<MenuCategory>("All");
+  const [sortBy, setSortBy] = useState<"newest" | "highest">("newest");
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewTitle, setReviewTitle] = useState("");
   const [reviewBody, setReviewBody] = useState("");
@@ -54,12 +56,15 @@ export function RestaurantDetailsScreen() {
   const { data: rating } = useRatingSummary(restaurantId);
   const { data: reviews = [], isLoading: reviewsLoading } = useReviews(
     restaurantId,
+    sortBy,
   ) as {
     data?: Review[];
     isLoading: boolean;
   };
   const submitReview = useSubmitReview(restaurantId);
   const isSubmittingReview = submitReview.status === "pending";
+  const user = useAuthStore((state) => state.user);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const scrollViewRef = useRef<ScrollView>(null);
   const [menuY, setMenuY] = useState(0);
 
@@ -71,10 +76,27 @@ export function RestaurantDetailsScreen() {
   };
 
   const handleSubmitReview = async () => {
-    if (!reviewTitle.trim() || !reviewBody.trim()) {
+    const trimmedBody = reviewBody.trim();
+    if (!trimmedBody) {
       Alert.alert(
-        "Review missing",
-        "Please add a title and review content before submitting.",
+        "Review text required",
+        "Please write your review before submitting.",
+      );
+      return;
+    }
+
+    if (trimmedBody.length < 10) {
+      Alert.alert(
+        "Review too short",
+        `Your review must be at least 10 characters long. Current length: ${trimmedBody.length} characters.`,
+      );
+      return;
+    }
+
+    if (trimmedBody.length > 500) {
+      Alert.alert(
+        "Review too long",
+        `Your review must be at most 500 characters long. Current length: ${trimmedBody.length} characters.`,
       );
       return;
     }
@@ -83,11 +105,12 @@ export function RestaurantDetailsScreen() {
       await submitReview.mutateAsync({
         rating: reviewRating,
         title: reviewTitle.trim(),
-        body: reviewBody.trim(),
+        body: trimmedBody,
       });
       setReviewRating(5);
       setReviewTitle("");
       setReviewBody("");
+      Alert.alert("Success", "Your review has been submitted successfully.");
     } catch (error) {
       Alert.alert(
         "Failed to submit review",
@@ -255,34 +278,104 @@ export function RestaurantDetailsScreen() {
         </View>
 
         <View style={styles.reviewSection}>
-          <ReviewForm
-            rating={reviewRating}
-            title={reviewTitle}
-            body={reviewBody}
-            loading={isSubmittingReview}
-            onRatingChange={setReviewRating}
-            onTitleChange={setReviewTitle}
-            onBodyChange={setReviewBody}
-            onSubmit={handleSubmitReview}
-          />
-          <View style={styles.reviewHeader}>
-            <Text style={styles.sectionTitle}>Guest Reviews</Text>
-            <Text style={styles.sectionMeta}>
-              {reviewsLoading
-                ? "Loading…"
-                : `${reviews.length} review${reviews.length === 1 ? "" : "s"}`}
-            </Text>
+          <Text style={styles.sectionTitle}>Ratings Breakdown</Text>
+          <View style={{ marginTop: 10, marginBottom: 20 }}>
+            <RatingSummaryCard summary={rating} />
           </View>
+
+          {!isAuthenticated ? (
+            <View style={styles.lockCard}>
+              <Feather name="lock" size={24} color={colors.primary} />
+              <Text style={styles.lockTitle}>Want to write a review?</Text>
+              <Text style={styles.lockSubtitle}>
+                Only verified users can share reviews. Please log in to your account.
+              </Text>
+              <TouchableOpacity
+                style={styles.lockButton}
+                activeOpacity={0.8}
+                onPress={() => navigation.navigate("Login")}
+              >
+                <Text style={styles.lockButtonText}>Log In / Sign Up</Text>
+              </TouchableOpacity>
+            </View>
+          ) : !user?.isVerified ? (
+            <View style={styles.lockCard}>
+              <Feather name="alert-circle" size={24} color={colors.danger} />
+              <Text style={styles.lockTitle}>Verification Required</Text>
+              <Text style={styles.lockSubtitle}>
+                Please verify your email address to submit a review for this restaurant.
+              </Text>
+              <TouchableOpacity
+                style={styles.lockButtonDanger}
+                activeOpacity={0.8}
+                onPress={async () => {
+                  try {
+                    await require("@/services/authService").authService.resendVerification(user?.email || "");
+                    Alert.alert("Success", "Verification email has been sent. Please check your inbox.");
+                  } catch (err) {
+                    Alert.alert("Error", (err as Error).message || "Failed to resend verification email.");
+                  }
+                }}
+              >
+                <Text style={styles.lockButtonText}>Resend Verification Email</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <ReviewForm
+              rating={reviewRating}
+              title={reviewTitle}
+              body={reviewBody}
+              loading={isSubmittingReview}
+              onRatingChange={setReviewRating}
+              onTitleChange={setReviewTitle}
+              onBodyChange={setReviewBody}
+              onSubmit={handleSubmitReview}
+            />
+          )}
+
+          <View style={styles.reviewHeader}>
+            <View>
+              <Text style={styles.sectionTitle}>Guest Reviews</Text>
+              <Text style={styles.sectionMeta}>
+                {reviewsLoading
+                  ? "Loading…"
+                  : `${reviews.length} review${reviews.length === 1 ? "" : "s"}`}
+              </Text>
+            </View>
+            <View style={styles.sortContainer}>
+              <TouchableOpacity
+                onPress={() => setSortBy("newest")}
+                style={[styles.sortBtn, sortBy === "newest" && styles.sortBtnActive]}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.sortBtnText, sortBy === "newest" && styles.sortBtnTextActive]}>Newest</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setSortBy("highest")}
+                style={[styles.sortBtn, sortBy === "highest" && styles.sortBtnActive]}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.sortBtnText, sortBy === "highest" && styles.sortBtnTextActive]}>Highest Rated</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
           {reviewsLoading ? (
             <Text style={styles.emptyText}>Loading reviews…</Text>
           ) : reviews.length === 0 ? (
-            <Text style={styles.emptyText}>
-              No reviews yet. Be the first to share your experience.
-            </Text>
+            <View style={styles.emptyReviewsContainer}>
+              <Feather name="message-square" size={32} color={colors.primary} style={styles.emptyReviewsIcon} />
+              <Text style={styles.emptyReviewsTitle}>No reviews yet</Text>
+              <Text style={styles.emptyReviewsSubtitle}>
+                Be the first to share your experience.
+              </Text>
+            </View>
           ) : (
-            reviews.map((review) => (
-              <ReviewCard key={review.id} review={review} />
-            ))
+            <View style={styles.reviewsList}>
+              {reviews.map((review) => (
+                <ReviewCard key={review.id} review={review} />
+              ))}
+            </View>
           )}
         </View>
 
@@ -567,5 +660,104 @@ const styles = StyleSheet.create({
     maxWidth: 260,
     lineHeight: 20,
     marginTop: 4,
+  },
+  lockCard: {
+    backgroundColor: colors.beigeSoft,
+    borderRadius: radius.md,
+    borderColor: colors.border,
+    borderWidth: 1,
+    padding: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 20,
+    ...shadows.soft,
+    gap: 8,
+  },
+  lockTitle: {
+    color: colors.primaryDark,
+    fontFamily: "Georgia",
+    fontSize: 18,
+    fontWeight: "700",
+    marginTop: 4,
+  },
+  lockSubtitle: {
+    color: colors.textSecondary,
+    fontSize: 14,
+    textAlign: "center",
+    lineHeight: 20,
+    marginBottom: 8,
+  },
+  lockButton: {
+    backgroundColor: colors.primaryDark,
+    borderRadius: radius.md,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    ...shadows.soft,
+  },
+  lockButtonDanger: {
+    backgroundColor: colors.danger,
+    borderRadius: radius.md,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    ...shadows.soft,
+  },
+  lockButtonText: {
+    color: colors.white,
+    fontSize: 14,
+    fontWeight: "800",
+  },
+  sortContainer: {
+    flexDirection: "row",
+    gap: 6,
+    backgroundColor: colors.beige,
+    borderRadius: radius.sm,
+    padding: 3,
+  },
+  sortBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 4,
+  },
+  sortBtnActive: {
+    backgroundColor: colors.primaryDark,
+  },
+  sortBtnText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: colors.primaryDark,
+  },
+  sortBtnTextActive: {
+    color: colors.white,
+  },
+  emptyReviewsContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.beigeSoft,
+    borderRadius: radius.md,
+    paddingVertical: 32,
+    paddingHorizontal: 20,
+    marginTop: 8,
+    borderColor: colors.border,
+    borderWidth: 1,
+    ...shadows.soft,
+    gap: 6,
+  },
+  emptyReviewsIcon: {
+    marginBottom: 4,
+    opacity: 0.8,
+  },
+  emptyReviewsTitle: {
+    color: colors.primaryDark,
+    fontFamily: "Georgia",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  emptyReviewsSubtitle: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    textAlign: "center",
+  },
+  reviewsList: {
+    gap: 12,
   },
 });

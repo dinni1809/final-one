@@ -3,9 +3,12 @@ import { useNavigation } from "@react-navigation/native";
 import { Image } from "expo-image";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
+import { useQuery } from "@tanstack/react-query";
+
 import { Screen } from "@/components/common/Screen";
 import { useAuthStore } from "@/store/authStore";
 import { useFavoriteStore } from "@/store/favoriteStore";
+import { apiClient } from "@/services/api/client";
 import { colors, radius, shadows, typography } from "@/theme";
 
 export function ProfileScreen() {
@@ -13,6 +16,16 @@ export function ProfileScreen() {
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
   const savedCount = useFavoriteStore((state) => state.restaurants.length);
+
+  const { data: reviewsCount = 0 } = useQuery({
+    queryKey: ["user-reviews-count", user?.id],
+    queryFn: async () => {
+      if (!user) return 0;
+      const { data } = await apiClient.get<{ success: boolean; data: { count: number } }>("/auth/me/reviews/count");
+      return data.data?.count ?? 0;
+    },
+    enabled: !!user,
+  });
 
   const getInitials = (name?: string) => {
     if (!name) return "FG";
@@ -53,7 +66,7 @@ export function ProfileScreen() {
             <View style={[styles.statIconContainer, { backgroundColor: "#FEF2D9" }]}>
               <Feather name="star" size={18} color={colors.warning} />
             </View>
-            <Text style={styles.statNumber}>12</Text>
+            <Text style={styles.statNumber}>{reviewsCount}</Text>
             <Text style={styles.statLabel}>Reviews</Text>
           </View>
           <View style={styles.statCard}>

@@ -2,8 +2,26 @@ const mongoose = require("mongoose");
 const Review = require("../models/Review");
 
 exports.create = (data) => Review.create(data);
-exports.findByRestaurant = (restaurantId) =>
-  Review.find({ restaurant: restaurantId }).sort({ createdAt: -1 });
+
+exports.findByRestaurant = (restaurantId, sortBy) => {
+  let sortRule = { createdAt: -1 }; // default: newest
+  if (sortBy === "highest") {
+    sortRule = { rating: -1, createdAt: -1 };
+  } else if (sortBy === "newest") {
+    sortRule = { createdAt: -1 };
+  }
+  return Review.find({ restaurant: restaurantId }).sort(sortRule);
+};
+
+exports.hasUserReviewed = async (restaurantId, userId) => {
+  const count = await Review.countDocuments({
+    restaurant: restaurantId,
+    user: userId,
+  });
+  return count > 0;
+};
+
+exports.countByUser = (userId) => Review.countDocuments({ user: userId });
 
 exports.getSummary = async (restaurantId) => {
   const match = { restaurant: new mongoose.Types.ObjectId(restaurantId) };

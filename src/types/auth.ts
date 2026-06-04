@@ -4,6 +4,7 @@ export type User = {
   username?: string;
   email: string;
   avatar?: string;
+  isVerified?: boolean;
 };
 
 export type AuthResponse = {

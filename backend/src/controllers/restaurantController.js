@@ -82,6 +82,7 @@ exports.reviews = async (req, res, next) => {
   try {
     const reviews = await require("../services/reviewService").getReviews(
       req.params.id,
+      req.query.sort,
     );
     response.ok(res, reviews);
   } catch (error) {

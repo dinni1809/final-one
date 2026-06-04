@@ -1,35 +1,37 @@
-import { NavigationContainer } from '@react-navigation/native';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { NavigationContainer } from "@react-navigation/native";
+import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { useState } from "react";
 
-import { LogoBadge } from '@/components/common/LogoBadge';
-import { colors } from '@/theme';
-import { useAuthStore } from '@/store/authStore';
+import { SplashScreen } from "@/screens/SplashScreen";
+import { LogoBadge } from "@/components/common/LogoBadge";
+import { colors } from "@/theme";
+import { useAuthStore } from "@/store/authStore";
 
-import { AppDrawerNavigator } from './AppDrawerNavigator';
-import { AuthNavigator } from './AuthNavigator';
+import { AppDrawerNavigator } from "./AppDrawerNavigator";
+import { AuthNavigator } from "./AuthNavigator";
 
 export function RootNavigator() {
   const isHydrating = useAuthStore((state) => state.isHydrating);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const [splashFinished, setSplashFinished] = useState(false);
 
-  if (isHydrating) {
-    return (
-      <View style={styles.loader}>
-        <LogoBadge size={96} />
-        <ActivityIndicator color={colors.primary} />
-      </View>
-    );
+  if (!splashFinished || isHydrating) {
+    return <SplashScreen onFinish={() => setSplashFinished(true)} />;
   }
 
-  return <NavigationContainer>{isAuthenticated ? <AppDrawerNavigator /> : <AuthNavigator />}</NavigationContainer>;
+  return (
+    <NavigationContainer>
+      {isAuthenticated ? <AppDrawerNavigator /> : <AuthNavigator />}
+    </NavigationContainer>
+  );
 }
 
 const styles = StyleSheet.create({
   loader: {
-    alignItems: 'center',
+    alignItems: "center",
     backgroundColor: colors.background,
     flex: 1,
     gap: 18,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
 });

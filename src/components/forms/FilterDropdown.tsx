@@ -361,6 +361,7 @@ const styles = StyleSheet.create({
   wrap: {
     width: "100%",
     position: "relative",
+    overflow: "visible",
     // Do NOT set overflow:hidden — dropdown must escape this boundary
   },
   control: {
@@ -416,9 +417,8 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   dropdown: {
-    // Float over everything below: absolutely positioned from the control bottom
     position: "absolute",
-    top: 60,          // height of the control button (56px) + 4px gap
+    top: "100%",
     left: 0,
     right: 0,
     backgroundColor: "#FAF6EE",
@@ -427,9 +427,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     maxHeight: 260,
     ...shadows.card,
-    zIndex: 10000,
+    zIndex: 9999,
     elevation: 30,
-    // No overflow:hidden so shadow is visible on all sides
   },
   searchContainer: {
     flexDirection: "row",

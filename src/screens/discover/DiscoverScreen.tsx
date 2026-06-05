@@ -89,13 +89,14 @@ export function DiscoverScreen() {
   return (
     <Screen>
       <Pressable
-        style={{ flex: 1 }}
+        style={{ flex: 1, overflow: "visible" }}
         onPress={() => {
           setOpenFilter(null);
           setOpenSort(false);
         }}
       >
         <ScrollView
+          style={{ overflow: "visible" }}
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
@@ -133,114 +134,103 @@ export function DiscoverScreen() {
             <View style={styles.captionLine} />
           </View>
 
-          {/* Filters Grid Section (2 columns) — no zIndex override needed here, FilterDropdown manages its own */}
+          {/* Filters Grid Section (2 columns) */}
           <View style={styles.filterGrid}>
-            {/* Row 1: Area | Cuisine */}
-            <View style={styles.filterRow}>
-              <View style={styles.gridCol}>
-                <FilterDropdown
-                  label="Area"
-                  value={filters.area}
-                  placeholder="Select area"
-                  options={dropdownOptions.area}
-                  open={openFilter === "area"}
-                  onOpen={() => setOpenFilter(openFilter === "area" ? null : "area")}
-                  onClose={() => setOpenFilter(null)}
-                  onSelect={(value) => {
-                    setFilter("area", value as never);
-                    setOpenFilter(null);
-                  }}
-                  iconName="map-pin"
-                />
-              </View>
-              <View style={styles.gridCol}>
-                <FilterDropdown
-                  label="Cuisine"
-                  value={filters.cuisine}
-                  placeholder="Select cuisine"
-                  options={dropdownOptions.cuisine}
-                  open={openFilter === "cuisine"}
-                  onOpen={() => setOpenFilter(openFilter === "cuisine" ? null : "cuisine")}
-                  onClose={() => setOpenFilter(null)}
-                  onSelect={(value) => {
-                    setFilter("cuisine", value as never);
-                    setOpenFilter(null);
-                  }}
-                  iconName="coffee"
-                />
-              </View>
+            <View style={[styles.filterItem, openFilter === "area" ? styles.filterItemOpen : styles.filterItemClosed]}>
+              <FilterDropdown
+                label="Area"
+                value={filters.area}
+                placeholder="Select area"
+                options={dropdownOptions.area}
+                open={openFilter === "area"}
+                onOpen={() => setOpenFilter(openFilter === "area" ? null : "area")}
+                onClose={() => setOpenFilter(null)}
+                onSelect={(value) => {
+                  setFilter("area", value as never);
+                  setOpenFilter(null);
+                }}
+                iconName="map-pin"
+              />
             </View>
-
-            {/* Row 2: Price | Type */}
-            <View style={styles.filterRow}>
-              <View style={styles.gridCol}>
-                <FilterDropdown
-                  label="Price"
-                  value={filters.price}
-                  placeholder="Select price"
-                  options={dropdownOptions.price}
-                  open={openFilter === "price"}
-                  onOpen={() => setOpenFilter(openFilter === "price" ? null : "price")}
-                  onClose={() => setOpenFilter(null)}
-                  onSelect={(value) => {
-                    setFilter("price", value as never);
-                    setOpenFilter(null);
-                  }}
-                  iconText="₹"
-                />
-              </View>
-              <View style={styles.gridCol}>
-                <FilterDropdown
-                  label="Type of Restaurant"
-                  value={filters.style}
-                  placeholder="All Types"
-                  options={dropdownOptions.style}
-                  open={openFilter === "style"}
-                  onOpen={() => setOpenFilter(openFilter === "style" ? null : "style")}
-                  onClose={() => setOpenFilter(null)}
-                  onSelect={(value) => {
-                    setFilter("style", value as never);
-                    setOpenFilter(null);
-                  }}
-                  iconName="home"
-                />
-              </View>
+            <View style={[styles.filterItem, openFilter === "cuisine" ? styles.filterItemOpen : styles.filterItemClosed]}>
+              <FilterDropdown
+                label="Cuisine"
+                value={filters.cuisine}
+                placeholder="Select cuisine"
+                options={dropdownOptions.cuisine}
+                open={openFilter === "cuisine"}
+                onOpen={() => setOpenFilter(openFilter === "cuisine" ? null : "cuisine")}
+                onClose={() => setOpenFilter(null)}
+                onSelect={(value) => {
+                  setFilter("cuisine", value as never);
+                  setOpenFilter(null);
+                }}
+                iconName="coffee"
+              />
             </View>
-
-            {/* Row 3: Menu Item | Rating */}
-            <View style={styles.filterRow}>
-              <View style={styles.gridCol}>
-                <FilterDropdown
-                  label="Menu Item"
-                  value={filters.menuItem}
-                  placeholder="Select item"
-                  options={dropdownOptions.menuItem}
-                  open={openFilter === "menuItem"}
-                  onOpen={() => setOpenFilter(openFilter === "menuItem" ? null : "menuItem")}
-                  onClose={() => setOpenFilter(null)}
-                  onSelect={(value) => {
-                    setFilter("menuItem", value as never);
-                    setOpenFilter(null);
-                  }}
-                  iconName="book-open"
-                />
-              </View>
-              <View style={styles.gridCol}>
-                <FilterDropdown
-                  label="Rating"
-                  value={filters.rating}
-                  placeholder="Any rating"
-                  options={["Any rating", "3.0+", "4.0+", "4.5+"]}
-                  open={openFilter === "rating"}
-                  onOpen={() => setOpenFilter(openFilter === "rating" ? null : "rating")}
-                  onClose={() => setOpenFilter(null)}
-                  onSelect={(value) => {
-                    setFilter("rating", value === "Any rating" ? undefined : value);
-                    setOpenFilter(null);
-                  }}
-                  iconName="star"
-                />
-              </View>
+            <View style={[styles.filterItem, openFilter === "price" ? styles.filterItemOpen : styles.filterItemClosed]}>
+              <FilterDropdown
+                label="Price"
+                value={filters.price}
+                placeholder="Select price"
+                options={dropdownOptions.price}
+                open={openFilter === "price"}
+                onOpen={() => setOpenFilter(openFilter === "price" ? null : "price")}
+                onClose={() => setOpenFilter(null)}
+                onSelect={(value) => {
+                  setFilter("price", value as never);
+                  setOpenFilter(null);
+                }}
+                iconText="₹"
+              />
+            </View>
+            <View style={[styles.filterItem, openFilter === "style" ? styles.filterItemOpen : styles.filterItemClosed]}>
+              <FilterDropdown
+                label="Type of Restaurant"
+                value={filters.style}
+                placeholder="All Types"
+                options={dropdownOptions.style}
+                open={openFilter === "style"}
+                onOpen={() => setOpenFilter(openFilter === "style" ? null : "style")}
+                onClose={() => setOpenFilter(null)}
+                onSelect={(value) => {
+                  setFilter("style", value as never);
+                  setOpenFilter(null);
+                }}
+                iconName="home"
+              />
+            </View>
+            <View style={[styles.filterItem, openFilter === "menuItem" ? styles.filterItemOpen : styles.filterItemClosed]}>
+              <FilterDropdown
+                label="Menu Item"
+                value={filters.menuItem}
+                placeholder="Select item"
+                options={dropdownOptions.menuItem}
+                open={openFilter === "menuItem"}
+                onOpen={() => setOpenFilter(openFilter === "menuItem" ? null : "menuItem")}
+                onClose={() => setOpenFilter(null)}
+                onSelect={(value) => {
+                  setFilter("menuItem", value as never);
+                  setOpenFilter(null);
+                }}
+                iconName="book-open"
+              />
+            </View>
+            <View style={[styles.filterItem, openFilter === "rating" ? styles.filterItemOpen : styles.filterItemClosed]}>
+              <FilterDropdown
+                label="Rating"
+                value={filters.rating}
+                placeholder="Any rating"
+                options={["Any rating", "3.0+", "4.0+", "4.5+"]}
+                open={openFilter === "rating"}
+                onOpen={() => setOpenFilter(openFilter === "rating" ? null : "rating")}
+                onClose={() => setOpenFilter(null)}
+                onSelect={(value) => {
+                  setFilter("rating", value === "Any rating" ? undefined : value);
+                  setOpenFilter(null);
+                }}
+                iconName="star"
+              />
             </View>
           </View>
 
@@ -354,6 +344,7 @@ const styles = StyleSheet.create({
     paddingBottom: 120,
     paddingHorizontal: 12,
     paddingTop: 8,
+    overflow: "visible",
   },
   header: {
     alignItems: "center",
@@ -391,21 +382,26 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   filterGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
     gap: 8,
     marginTop: 2,
-    // High base z-index so every FilterDropdown (zIndex:10000) paints above
-    // resultsHeader (zIndex:0) and the restaurant card grid (zIndex:0).
-    // Do NOT add overflow:hidden here — that would clip the floating panels.
     zIndex: 100,
+    overflow: "visible",
   },
-  filterRow: {
-    flexDirection: "row",
-    gap: 8,
-    // Each row must NOT create its own opaque stacking context, so no zIndex here.
+  filterItem: {
+    width: "48%",
+    position: "relative",
+    overflow: "visible",
+    marginBottom: 8,
   },
-  gridCol: {
-    flex: 1,
-    // No zIndex — FilterDropdown's wrap style handles its own elevation.
+  filterItemOpen: {
+    zIndex: 9999,
+    elevation: 30,
+  },
+  filterItemClosed: {
+    zIndex: 1,
   },
   resultsHeader: {
     flexDirection: "row",

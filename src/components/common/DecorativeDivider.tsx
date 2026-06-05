@@ -2,12 +2,17 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { colors } from '@/theme';
 
-export function DecorativeDivider() {
+type Props = {
+  style?: any;
+  lineWidth?: number;
+};
+
+export function DecorativeDivider({ style, lineWidth }: Props) {
   return (
-    <View style={styles.row}>
-      <View style={styles.line} />
+    <View style={[styles.row, style]}>
+      <View style={[styles.line, lineWidth !== undefined && { width: lineWidth }]} />
       <Text style={styles.star}>✦</Text>
-      <View style={styles.line} />
+      <View style={[styles.line, lineWidth !== undefined && { width: lineWidth }]} />
     </View>
   );
 }
@@ -29,3 +34,4 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
 });
+

@@ -35,8 +35,8 @@ export function HomeScreen() {
         </View>
 
         <View style={styles.heroText}>
-          <Text style={styles.headline}>Curated Dining.{'\n'}Made Effortless.</Text>
-          <DecorativeDivider />
+          <Text style={styles.headline}>Curated Dining, Made Effortless</Text>
+          <DecorativeDivider lineWidth={32} style={{ marginVertical: 8 }} />
         </View>
 
         <LinearGradient colors={['#9B5D20', '#3A1604']} style={styles.ctaCard}>
@@ -44,11 +44,12 @@ export function HomeScreen() {
             <Text style={styles.compassText}>◆</Text>
           </View>
           <Text style={styles.ctaTitle}>Discover Restaurants</Text>
-          <Text style={styles.ctaCopy}>Explore curated dining experiences{'\n'}across Bangalore.</Text>
+          <Text style={styles.ctaCopy}>Explore curated dining experiences across Bangalore.</Text>
           <PrimaryButton
             title="Start Exploring"
             light
             icon="arrow-right"
+            style={{ alignSelf: 'stretch', height: 52, minHeight: 52 }}
             onPress={() => rootNavigation.navigate('Tabs' as never, { screen: 'Discover' } as never)}
           />
         </LinearGradient>
@@ -86,7 +87,7 @@ const styles = StyleSheet.create({
   content: {
     paddingBottom: 112,
     paddingHorizontal: 16,
-    paddingTop: 22,
+    paddingTop: 8,
   },
   header: {
     alignItems: 'center',
@@ -95,12 +96,13 @@ const styles = StyleSheet.create({
   },
   heroText: {
     alignItems: 'center',
-    marginTop: 30,
+    marginTop: 12,
   },
   headline: {
     ...typography.h1,
+    fontSize: 24,
     color: colors.primaryDark,
-    marginBottom: 20,
+    marginBottom: 8,
     textAlign: 'center',
   },
   ctaCard: {
@@ -108,35 +110,36 @@ const styles = StyleSheet.create({
     borderColor: '#E7C29D',
     borderRadius: radius.xl,
     borderWidth: 2,
-    gap: spacing.md,
+    gap: 10,
     marginHorizontal: 24,
-    marginTop: 24,
+    marginTop: 12,
     overflow: 'hidden',
-    padding: 24,
+    padding: 20,
+    height: 240,
     ...shadows.button,
   },
   compass: {
     alignItems: 'center',
     backgroundColor: colors.beigeSoft,
-    borderRadius: 28,
-    height: 56,
+    borderRadius: 24,
+    height: 48,
     justifyContent: 'center',
     transform: [{ rotate: '-14deg' }],
-    width: 56,
+    width: 48,
   },
   compassText: {
     color: colors.primaryDark,
-    fontSize: 24,
+    fontSize: 20,
   },
   ctaTitle: {
     color: colors.white,
     fontFamily: 'Georgia',
-    fontSize: 29,
+    fontSize: 24,
   },
   ctaCopy: {
     color: colors.white,
-    fontSize: 15,
-    lineHeight: 24,
+    fontSize: 14,
+    lineHeight: 20,
     opacity: 0.92,
     textAlign: 'center',
   },

@@ -46,4 +46,5 @@ export type DrawerParamList = {
   Search: undefined;
   Offers: undefined;
   RestaurantDetails: { restaurantId: string };
+  AdminDashboard: undefined;
 };

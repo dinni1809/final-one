@@ -7,14 +7,19 @@ import { NotificationsScreen } from '@/screens/notifications/NotificationsScreen
 import { OffersScreen } from '@/screens/offers/OffersScreen';
 import { RestaurantDetailsScreen } from '@/screens/restaurant/RestaurantDetailsScreen';
 import { SearchScreen } from '@/screens/search/SearchScreen';
+import { AdminDashboardScreen } from '@/screens/admin/AdminDashboardScreen';
 import { colors, typography } from '@/theme';
 import type { DrawerParamList } from '@/types/navigation';
+import { useAuthStore } from '@/store/authStore';
 
 import { BottomTabNavigator } from './BottomTabNavigator';
 
 const Drawer = createDrawerNavigator<DrawerParamList>();
 
 export function AppDrawerNavigator() {
+  const user = useAuthStore((state) => state.user);
+  const isAdmin = user?.role === 'admin';
+
   return (
     <Drawer.Navigator
       drawerContent={(props) => (
@@ -38,6 +43,13 @@ export function AppDrawerNavigator() {
       <Drawer.Screen name="Offers" component={OffersScreen} />
       <Drawer.Screen name="Bookmarks" component={BookmarksScreen} />
       <Drawer.Screen name="Notifications" component={NotificationsScreen} />
+      {isAdmin && (
+        <Drawer.Screen
+          name="AdminDashboard"
+          component={AdminDashboardScreen}
+          options={{ title: 'Admin Panel' }}
+        />
+      )}
       <Drawer.Screen
         name="RestaurantDetails"
         component={RestaurantDetailsScreen}

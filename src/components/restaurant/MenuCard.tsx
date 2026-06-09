@@ -13,6 +13,8 @@ type Props = {
 };
 
 export function MenuCard({ item }: Props) {
+  const hasVariants = item.variants && item.variants.length > 0;
+
   return (
     <View style={styles.card}>
       <View>
@@ -22,14 +24,18 @@ export function MenuCard({ item }: Props) {
         </View>
       </View>
       <View style={styles.body}>
-        <Text style={styles.name}>{item.name}</Text>
-        <Text style={styles.description}>{item.description}</Text>
+        <View style={styles.mainInfo}>
+          <Text style={styles.name} numberOfLines={2}>{item.name}</Text>
+          <Text style={styles.description} numberOfLines={3}>{item.description}</Text>
+        </View>
         <View style={styles.footer}>
           <Text style={styles.price}>{formatCurrency(item.price)}</Text>
-          <TouchableOpacity style={styles.portion}>
-            <Text style={styles.portionText}>{item.portions[0]}</Text>
-            <Feather name="chevron-down" size={14} color={colors.primaryDark} />
-          </TouchableOpacity>
+          {hasVariants && (
+            <TouchableOpacity style={styles.portion}>
+              <Text style={styles.portionText}>{item.variants?.[0]}</Text>
+              <Feather name="chevron-down" size={14} color={colors.primaryDark} />
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     </View>
@@ -44,6 +50,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     width: '48%',
     ...shadows.card,
+    height: 270,
   },
   image: {
     height: 112,
@@ -55,24 +62,30 @@ const styles = StyleSheet.create({
     top: 8,
   },
   body: {
+    flex: 1,
     gap: 5,
     padding: 10,
+    justifyContent: 'space-between',
+  },
+  mainInfo: {
+    gap: 5,
   },
   name: {
     color: colors.text,
     fontFamily: 'Georgia',
     fontSize: 17,
+    fontWeight: '700',
   },
   description: {
     color: colors.textSecondary,
     fontSize: 12,
     lineHeight: 17,
-    minHeight: 52,
   },
   footer: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginTop: 'auto',
   },
   price: {
     color: colors.primaryDark,

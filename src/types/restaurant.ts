@@ -47,6 +47,7 @@ export type MenuItem = {
   category: Exclude<MenuCategory, "All">;
   image: string;
   portions: string[];
+  variants?: string[];
 };
 
 export type RatingSummary = {

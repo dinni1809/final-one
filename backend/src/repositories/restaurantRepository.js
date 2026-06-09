@@ -64,18 +64,59 @@ exports.filter = async ({
 }) => {
   const filter = {};
 
-  // 1. Area: Case-insensitive substring match (handles comma-separated lists)
+  // 1. Area: Case-insensitive substring match (handles comma-separated lists and spelling normalization)
   if (area) {
-    filter.area = { $regex: area.trim(), $options: "i" };
+    const cleanArea = area.trim().toLowerCase();
+    let areaPattern;
+    if (cleanArea === "indiranagar") {
+      areaPattern = "indiranagar|indirangar";
+    } else if (cleanArea === "koramangala") {
+      areaPattern = "koramangala|koramnagala";
+    } else if (cleanArea === "whitefield") {
+      areaPattern = "whitefield|whitefiled|phoenix marketcity";
+    } else if (cleanArea === "jakkur") {
+      areaPattern = "jakkur|jakku";
+    } else if (cleanArea === "frazer town") {
+      areaPattern = "frazer town|fraser town";
+    } else if (cleanArea === "electronic city") {
+      areaPattern = "electronic city|electronic city phase 1";
+    } else if (cleanArea === "rajajinagar") {
+      areaPattern = "rajajinagar|orion mall";
+    } else if (cleanArea === "hebbal") {
+      areaPattern = "hebbal|phoenix mall of asia";
+    } else if (cleanArea === "malleshwaram") {
+      areaPattern = "malleshwaram|mantri square";
+    } else if (cleanArea === "mg road") {
+      areaPattern = "mg road|central street";
+    } else {
+      areaPattern = area.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
+    filter.area = { $regex: areaPattern, $options: "i" };
   }
 
   // 2. Cuisine and Style/Type (both are checked against the 'cuisine' field in MongoDB)
   const cuisineConditions = [];
   if (cuisine) {
-    cuisineConditions.push({ cuisine: { $regex: cuisine.trim(), $options: "i" } });
+    const cleanCuisine = cuisine.trim().toLowerCase();
+    let cuisinePattern;
+    if (cleanCuisine === "desserts" || cleanCuisine === "dessert") {
+      cuisinePattern = "desserts|dessert";
+    } else if (cleanCuisine === "andhra" || cleanCuisine === "andhra style") {
+      cuisinePattern = "andhra|andhra style";
+    } else {
+      cuisinePattern = cuisine.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
+    cuisineConditions.push({ cuisine: { $regex: cuisinePattern, $options: "i" } });
   }
   if (style) {
-    cuisineConditions.push({ cuisine: { $regex: style.trim(), $options: "i" } });
+    const cleanStyle = style.trim().toLowerCase();
+    let stylePattern;
+    if (cleanStyle === "cafe" || cleanStyle === "café") {
+      stylePattern = "cafe|café";
+    } else {
+      stylePattern = style.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
+    cuisineConditions.push({ cuisine: { $regex: stylePattern, $options: "i" } });
   }
   if (cuisineConditions.length > 0) {
     filter.$and = cuisineConditions;

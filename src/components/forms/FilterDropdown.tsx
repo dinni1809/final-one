@@ -240,31 +240,33 @@ export function FilterDropdown({
           },
         ]}
       >
-        {/* Search Box */}
-        <View style={styles.searchContainer}>
-          <Feather
-            name="search"
-            size={16}
-            color={colors.textSecondary}
-            style={styles.searchIcon}
-          />
-          <TextInput
-            style={styles.searchInput}
-            placeholder={`Search ${label.toLowerCase()}...`}
-            placeholderTextColor={colors.textSecondary}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            autoCorrect={false}
-            autoCapitalize="none"
-          />
-          {searchQuery ? (
-            <TouchableOpacity
-              onPress={() => setSearchQuery("")}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Feather name="x" size={16} color={colors.textSecondary} />
-            </TouchableOpacity>
-          ) : null}
+        {/* Search Section Wrapper */}
+        <View style={styles.searchSection}>
+          <View style={styles.searchContainer}>
+            <Feather
+              name="search"
+              size={16}
+              color={colors.textSecondary}
+              style={styles.searchIcon}
+            />
+            <TextInput
+              style={styles.searchInput}
+              placeholder={`Search ${label.toLowerCase()}...`}
+              placeholderTextColor={colors.textSecondary}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              autoCorrect={false}
+              autoCapitalize="none"
+            />
+            {searchQuery ? (
+              <TouchableOpacity
+                onPress={() => setSearchQuery("")}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Feather name="x" size={16} color={colors.textSecondary} />
+              </TouchableOpacity>
+            ) : null}
+          </View>
         </View>
 
         {/* List of Options */}
@@ -430,6 +432,11 @@ const styles = StyleSheet.create({
     zIndex: 9999,
     elevation: 30,
   },
+  searchSection: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#EADDC9",
+  },
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -437,7 +444,6 @@ const styles = StyleSheet.create({
     borderColor: "#EADDC9",
     borderWidth: 1,
     borderRadius: radius.sm,
-    margin: 8,
     paddingHorizontal: 8,
     height: 36,
   },

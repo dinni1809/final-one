@@ -14,11 +14,17 @@ type Props = {
 
 export function MenuCard({ item }: Props) {
   const hasVariants = item.variants && item.variants.length > 0;
+  const imageSource =
+    typeof item.image === 'number' || (typeof item.image === 'object' && item.image !== null)
+      ? item.image
+      : typeof item.image === 'string'
+      ? { uri: item.image }
+      : undefined;
 
   return (
     <View style={styles.card}>
       <View>
-        <Image source={{ uri: item.image }} style={styles.image} contentFit="cover" />
+        <Image source={imageSource} style={styles.image} contentFit="cover" />
         <View style={styles.favorite}>
           <FavoriteButton id={item.id} type="menu" />
         </View>

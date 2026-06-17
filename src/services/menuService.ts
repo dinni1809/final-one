@@ -52,20 +52,37 @@ const normalizeCategory = (cat?: string): Exclude<MenuCategory, "All"> => {
   return "Mains";
 };
 
-const getMenuFallbackImage = (name: string, description: string, category: string): string => {
+const fallbacks: Record<string, any> = {
+  chicken: require('../../assets/chicken.png'),
+  paneer: require('../../assets/paneer.png'),
+  biryani: require('../../assets/biryani.png'),
+  burger: require('../../assets/burger.png'),
+  pizza: require('../../assets/pizza.png'),
+  coffee: require('../../assets/coffee.png'),
+  ice_cream: require('../../assets/ice_cream.png'),
+  cake: require('../../assets/cake.png'),
+  chinese: require('../../assets/chinese.png'),
+  south_indian: require('../../assets/south_indian.png'),
+};
+
+const getMenuFallbackImage = (name: string, description: string, category: string): any => {
   const lowerName = name.toLowerCase();
   const lowerDesc = description.toLowerCase();
   const lowerCat = category.toLowerCase();
 
+  // 1. Biryani
   if (lowerName.includes("biryani") || lowerDesc.includes("biryani")) {
-    return getImageUri("photo-1633945274405-b6c8069047b0", 620, 420);
+    return fallbacks.biryani;
   }
+  // 2. Pizza
   if (lowerName.includes("pizza") || lowerDesc.includes("pizza")) {
-    return getImageUri("photo-1513104890138-7c749659a591", 620, 420);
+    return fallbacks.pizza;
   }
+  // 3. Burger
   if (lowerName.includes("burger") || lowerDesc.includes("burger")) {
-    return getImageUri("photo-1568901346375-23c9450c58cd", 620, 420);
+    return fallbacks.burger;
   }
+  // 4. Coffee
   if (
     lowerName.includes("coffee") ||
     lowerDesc.includes("coffee") ||
@@ -74,8 +91,9 @@ const getMenuFallbackImage = (name: string, description: string, category: strin
     lowerName.includes("espresso") ||
     lowerName.includes("macchiato")
   ) {
-    return getImageUri("photo-1509042239860-f550ce710b93", 620, 420);
+    return fallbacks.coffee;
   }
+  // 5. Chicken / Mutton / Meat / Kebab
   if (
     lowerName.includes("chicken") ||
     lowerDesc.includes("chicken") ||
@@ -86,41 +104,92 @@ const getMenuFallbackImage = (name: string, description: string, category: strin
     lowerName.includes("meat") ||
     lowerDesc.includes("meat")
   ) {
-    return getImageUri("photo-1604503468506-a8da13d82791", 620, 420);
+    return fallbacks.chicken;
   }
+  // 6. Paneer
   if (
     lowerName.includes("paneer") ||
     lowerDesc.includes("paneer") ||
     lowerName.includes("tofu") ||
     lowerDesc.includes("tofu")
   ) {
-    return getImageUri("photo-1631452180519-c014fe946bc7", 620, 420);
+    return fallbacks.paneer;
   }
+  // 7. Ice Cream
   if (
-    lowerCat.includes("dessert") ||
-    lowerName.includes("dessert") ||
-    lowerDesc.includes("dessert") ||
     lowerName.includes("ice cream") ||
     lowerDesc.includes("ice cream") ||
+    lowerName.includes("sundae") ||
+    lowerName.includes("fudge") ||
+    lowerName.includes("scoop") ||
+    lowerName.includes("scooper")
+  ) {
+    return fallbacks.ice_cream;
+  }
+  // 8. Cake
+  if (
     lowerName.includes("cake") ||
     lowerDesc.includes("cake") ||
-    lowerName.includes("waffle") ||
-    lowerDesc.includes("waffle") ||
-    lowerName.includes("chocolate") ||
-    lowerDesc.includes("chocolate") ||
-    lowerName.includes("shake") ||
-    lowerDesc.includes("shake") ||
-    lowerName.includes("sweet") ||
-    lowerDesc.includes("sweet")
+    lowerName.includes("pastry") ||
+    lowerName.includes("lava") ||
+    lowerName.includes("tiramisu")
   ) {
-    return getImageUri("photo-1551024601-bec78aea704b", 620, 420);
+    return fallbacks.cake;
+  }
+  // 9. Chinese
+  if (
+    lowerName.includes("noodles") ||
+    lowerName.includes("chinese") ||
+    lowerName.includes("fried rice") ||
+    lowerName.includes("manchurian") ||
+    lowerName.includes("momos") ||
+    lowerName.includes("dumpling")
+  ) {
+    return fallbacks.chinese;
+  }
+  // 10. South Indian
+  if (
+    lowerName.includes("dosa") ||
+    lowerName.includes("idli") ||
+    lowerName.includes("uttapam") ||
+    lowerName.includes("vada") ||
+    lowerName.includes("sambar") ||
+    lowerName.includes("south indian")
+  ) {
+    return fallbacks.south_indian;
   }
 
+  // Category based general fallbacks:
+  if (lowerCat.includes("starter")) {
+    return fallbacks.chicken;
+  }
   if (lowerCat.includes("beverage") || lowerCat.includes("drink")) {
-    return getImageUri("photo-1497534446932-c925b458314e", 620, 420);
+    return fallbacks.coffee;
+  }
+  if (lowerCat.includes("dessert") || lowerCat.includes("sweet")) {
+    return fallbacks.cake;
   }
 
-  return getImageUri("photo-1546069901-ba9599a7e63c", 620, 420);
+  return fallbacks.biryani;
+};
+
+const isValidImage = (url?: string): boolean => {
+  if (!url) return false;
+  const trimmed = url.trim().toLowerCase();
+  if (
+    trimmed === "" ||
+    trimmed === "null" ||
+    trimmed === "undefined" ||
+    trimmed === "placeholder" ||
+    trimmed === "default"
+  ) {
+    return false;
+  }
+  // Treat the reused donut fallback URL as missing to force high-quality local fallback mapping
+  if (trimmed.includes("photo-1551024601-bec78aea704b")) {
+    return false;
+  }
+  return /^https?:\/\//i.test(trimmed) || trimmed.startsWith("data:image") || trimmed.includes("unsplash.com");
 };
 
 const normalizeMenuItem = (
@@ -130,8 +199,10 @@ const normalizeMenuItem = (
   const name = item.name ?? "Menu item";
   const description = item.description ?? "";
   const category = normalizeCategory(item.category as string);
-  const rawImage = item.image_url ?? item.image ?? item.dish_image ?? item.photo ?? item.imageUrl;
-  const image = rawImage && rawImage.trim() ? rawImage : getMenuFallbackImage(name, description, category);
+  const rawImage = item.image ?? item.image_url ?? item.imageUrl ?? item.dish_image ?? item.photo;
+  const image = typeof rawImage === 'string' && isValidImage(rawImage)
+    ? rawImage.trim()
+    : (typeof rawImage === 'number' ? rawImage : getMenuFallbackImage(name, description, category));
   const variants = item.variants ?? item.portions ?? [];
   const portions = item.portions ?? item.variants ?? [];
 

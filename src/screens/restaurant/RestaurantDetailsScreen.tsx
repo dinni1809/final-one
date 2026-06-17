@@ -77,6 +77,29 @@ export function RestaurantDetailsScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
   const [menuY, setMenuY] = useState(0);
 
+  const isWebsiteMissing =
+    !restaurant?.website ||
+    (typeof restaurant.website === "string" ? restaurant.website.trim() === "" : true) ||
+    restaurant.website === "https://faattsoo.local";
+
+  const handleVisitWebsite = async () => {
+    if (isWebsiteMissing) {
+      Alert.alert("No website available", "This restaurant does not have a website listed.");
+      return;
+    }
+
+    let url = typeof restaurant.website === "string" ? restaurant.website.trim() : "";
+    if (!/^https?:\/\//i.test(url)) {
+      url = `https://${url}`;
+    }
+
+    try {
+      await Linking.openURL(url);
+    } catch (e) {
+      Alert.alert("Unable to open website", "We were unable to load the restaurant website. Please try again later.");
+    }
+  };
+
   const handleCategorySelect = (selectedCat: MenuCategory) => {
     setCategory(selectedCat);
     if (menuY > 0) {
@@ -169,24 +192,30 @@ export function RestaurantDetailsScreen() {
         showsVerticalScrollIndicator={false}
         stickyHeaderIndices={[4]}
       >
-        <View style={styles.topNav}>
-          <LogoBadge size={66} />
-          <SearchBar onPress={() => navigation.navigate("Search" as never)} />
-          <IconButton
-            name="heart"
-            size={25}
-            onPress={() => navigation.navigate("Bookmarks" as never)}
-          />
-          <IconButton
-            name="user"
-            size={25}
-            onPress={() => navigation.navigate("Profile" as never)}
-          />
-          <IconButton
-            name="menu"
-            size={27}
-            onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
-          />
+        <View style={styles.topNavContainer}>
+          <View style={styles.topNavRow}>
+            <LogoBadge size={54} />
+            <View style={styles.topNavIcons}>
+              <IconButton
+                name="heart"
+                size={23}
+                onPress={() => navigation.navigate("Bookmarks" as never)}
+              />
+              <IconButton
+                name="user"
+                size={23}
+                onPress={() => navigation.navigate("Profile" as never)}
+              />
+              <IconButton
+                name="menu"
+                size={25}
+                onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
+              />
+            </View>
+          </View>
+          <View style={styles.searchBarRow}>
+            <SearchBar onPress={() => navigation.navigate("Search" as never)} />
+          </View>
         </View>
 
         <View style={styles.banner}>
@@ -260,16 +289,20 @@ export function RestaurantDetailsScreen() {
           <Text style={styles.aboutTitle}>About {restaurant.name}</Text>
           <Text style={styles.aboutCopy}>{restaurant.description}</Text>
           <TouchableOpacity
-            style={styles.websiteButton}
-            onPress={() => void Linking.openURL(restaurant.website)}
+            style={[styles.websiteButton, isWebsiteMissing && { opacity: 0.6 }]}
+            onPress={handleVisitWebsite}
           >
             <Feather name="globe" size={19} color={colors.primaryDark} />
-            <Text style={styles.websiteText}>Visit Website</Text>
-            <Feather
-              name="external-link"
-              size={18}
-              color={colors.primaryDark}
-            />
+            <Text style={styles.websiteText}>
+              {isWebsiteMissing ? "No website available" : "Visit Website"}
+            </Text>
+            {!isWebsiteMissing && (
+              <Feather
+                name="external-link"
+                size={18}
+                color={colors.primaryDark}
+              />
+            )}
           </TouchableOpacity>
         </View>
 
@@ -436,12 +469,26 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
     paddingTop: 10,
   },
-  topNav: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 8,
-    marginBottom: 18,
+  topNavContainer: {
+    marginBottom: 16,
     marginHorizontal: 14,
+    gap: 12,
+  },
+  topNavRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+  topNavIcons: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  searchBarRow: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
   },
   banner: {
     height: 280,

@@ -45,7 +45,7 @@ export type MenuItem = {
   description: string;
   price: number;
   category: Exclude<MenuCategory, "All">;
-  image: string;
+  image: string | number;
   portions: string[];
   variants?: string[];
 };
